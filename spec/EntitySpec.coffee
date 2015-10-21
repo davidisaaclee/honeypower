@@ -5,6 +5,7 @@ Entity = require '../src/model/entities/Entity'
 Scene = require '../src/model/Scene'
 Set = require '../src/util/Set'
 
+
 describe 'Entities', () ->
   beforeEach () ->
     initialScene = Scene.empty

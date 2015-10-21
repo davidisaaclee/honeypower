@@ -4,7 +4,7 @@ editorReducer = require '../src/reducers/EditorReducer'
 Scene = require '../src/model/Scene'
 Entity = require '../src/model/entities/Entity'
 
-describe 'Scene', () ->
+describe 'Editor', () ->
   beforeEach () ->
     @store = createStore editorReducer
 

@@ -1,10 +1,51 @@
 editorActions = [
   # Adds a new entity to the scene.
   #
-  #   entity: String
+  #   name: String
   #   transform: Transform
   #   children: [Entity]
   'AddEntity'
+
+  # Removes (deletes) an entity from the scene.
+  #
+  #   entity: String
+  'RemoveEntity'
+
+  # Creates and adds a new trigger entity to the scene.
+  #
+  #   name: String
+  #   position: Vector2
+  #   shape: Path
+  #   transform: Transform
+  'PutTrigger'
+
+  # Creates and adds a new character entity to the scene.
+  #
+  #   name: String
+  #   spriteId: String
+  #   position: Vector2
+  #   transform: Transform
+  'PutCharacter'
+
+  # Creates and adds a new machine entity to the scene.
+  #
+  #   name: String
+  #   machine: Machine
+  #   position: Vector2
+  #   transform: Transform
+  'PutMachine'
+
+  # Parents one entity to another.
+  #
+  #  parent: String
+  #  child: String
+  'SetParent'
+
+  # Empowers a Character with a Machine.
+  #
+  #  character: String
+  #  machine: String
+  'GiveMachineToCharacter'
 ]
 
 
@@ -13,13 +54,14 @@ sceneActions = [
 
 
 entityActions = [
-  # Creates a new entity. The new entity is simply created and held in the
-  #   entity database for reference.
-  #
-  #   name: String
-  #   transform: Transform
-  #   children: [Entity]
-  'CreateEntity'
+  # i don't think we need this; is it too complex to have a bin of unused entities?
+  # # Creates a new entity. The new entity is simply created and held in the
+  # #   entity database for reference.
+  # #
+  # #   name: String
+  # #   transform: Transform
+  # #   children: [Entity]
+  # 'CreateEntity'
 
   # Add a child to an entity.
   #
