@@ -3416,7 +3416,7 @@ module.exports = exports['default'];
 },{"./freeze":74,"./util/curry":84}],90:[function(require,module,exports){
 var editorActions, entityActions, registerAction, sceneActions;
 
-editorActions = ['AddEntity', 'RemoveEntity', 'PutTrigger', 'PutCharacter', 'PutMachine', 'SetParent', 'GiveMachineToCharacter'];
+editorActions = ['AddEntity', 'RemoveEntity', 'StampPrototype', 'SetParent', 'GiveMachineToCharacter'];
 
 sceneActions = [];
 
@@ -3738,19 +3738,19 @@ Entity = (function(superClass) {
 
   Entity.translate = function(entity, amount) {
     return _.assign({}, entity, {
-      transform: Transform.translate(transform, amount)
+      transform: Transform.translate(entity.transform, amount)
     });
   };
 
   Entity.rotate = function(entity, amount) {
     return _.assign({}, entity, {
-      transform: Transform.rotate(transform, amount)
+      transform: Transform.rotate(entity.transform, amount)
     });
   };
 
   Entity.scale = function(entity, amount) {
     return _.assign({}, entity, {
-      transform: Transform.scale(transform, amount)
+      transform: Transform.scale(entity.transform, amount)
     });
   };
 
@@ -3762,9 +3762,11 @@ module.exports = Entity;
 
 
 },{"../Model":92,"../graphics/Transform":95,"lodash":"lodash"}],95:[function(require,module,exports){
-var Model, Transform, Vector2, wrap,
+var Model, Transform, Vector2, _, wrap,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
+
+_ = require('lodash');
 
 Model = require('../Model');
 
@@ -3799,6 +3801,17 @@ Transform = (function(superClass) {
     if (scale == null) {
       scale = Vector2.zero;
     }
+    return _.assign(new Transform(), {
+      position: position,
+      rotation: rotation,
+      scale: scale
+    });
+  };
+
+  Transform["default"] = Object.freeze(Transform.make());
+
+  Transform.withPosition = function(position) {
+    return Transform.make(position);
   };
 
   Transform.getPosition = function(transform) {
@@ -3815,7 +3828,7 @@ Transform = (function(superClass) {
 
   Transform.translate = function(transform, amount) {
     return _.assign({}, transform, {
-      translate: Vector2.add(transform.translate, amount)
+      position: Vector2.add(transform.position, amount)
     });
   };
 
@@ -3838,7 +3851,7 @@ Transform = (function(superClass) {
 module.exports = Transform;
 
 
-},{"../../util/wrap":103,"../Model":92,"./Vector2":96}],96:[function(require,module,exports){
+},{"../../util/wrap":103,"../Model":92,"./Vector2":96,"lodash":"lodash"}],96:[function(require,module,exports){
 var Model, Vector2, _,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;

@@ -64,14 +64,14 @@ class Entity extends Model
 
   @translate: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.translate transform, amount
+      transform: Transform.translate entity.transform, amount
 
   @rotate: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.rotate transform, amount
+      transform: Transform.rotate entity.transform, amount
 
   @scale: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.scale transform, amount
+      transform: Transform.scale entity.transform, amount
 
 module.exports = Entity

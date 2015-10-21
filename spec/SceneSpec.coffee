@@ -10,30 +10,3 @@ describe 'Scene', () ->
 
   it 'loads default state', () ->
     scene = @store.getState()
-
-  xit 'can add entities', () ->
-    @store.dispatch
-      type: k.AddEntity
-      data:
-        name: 'kiddo'
-
-    scene = @store.getState()
-
-    expect (Scene.getAllEntities scene).length
-      .toBe 1
-    expect (Scene.getEntityByName scene, 'kiddo')
-      .toBeDefined()
-
-    @store.dispatch
-      type: k.AddEntity,
-      data:
-        name: 'birdo'
-
-    scene = @store.getState()
-
-    expect (Scene.getAllEntities scene).length
-      .toBe 2
-    expect (Scene.getEntityByName scene, 'kiddo')
-      .toBeDefined()
-    expect (Scene.getEntityByName scene, 'birdo')
-      .toBeDefined()

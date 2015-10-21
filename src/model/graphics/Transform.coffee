@@ -1,3 +1,5 @@
+_ = require 'lodash'
+
 Model = require '../Model'
 Vector2 = require './Vector2'
 
@@ -13,6 +15,15 @@ Transform ::=
 ###
 class Transform extends Model
   @make: (position = Vector2.zero, rotation = 0, scale = Vector2.zero) ->
+    _.assign (new Transform()),
+      position: position
+      rotation: rotation
+      scale: scale
+
+  @default: Object.freeze Transform.make()
+
+  @withPosition: (position) ->
+    Transform.make position
 
 
   # Access
@@ -28,7 +39,7 @@ class Transform extends Model
 
   @translate: (transform, amount) ->
     _.assign {}, transform,
-      translate: Vector2.add transform.translate, amount
+      position: Vector2.add transform.position, amount
 
   @rotate: (transform, amount) ->
     _.assign {}, transform,

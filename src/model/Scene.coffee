@@ -17,6 +17,7 @@ class Scene extends Model
 
   @empty: Object.freeze Scene.make (Set.withHashFunction ({id}) -> id)
 
+
   # Access
 
   @getEntity: (scene, entityId) ->

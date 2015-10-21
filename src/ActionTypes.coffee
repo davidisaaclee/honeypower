@@ -1,39 +1,46 @@
 editorActions = [
-  # Adds a new entity to the scene.
-  #
-  #   name: String
-  #   transform: Transform
-  #   children: [Entity]
-  'AddEntity'
+  # obviated by `StampPrototype`
+  # # Adds a new entity to the scene.
+  # #
+  # #   name: String
+  # #   transform: Transform
+  # #   children: [Entity]
+  # 'AddEntity'
 
   # Removes (deletes) an entity from the scene.
   #
   #   entity: String
   'RemoveEntity'
 
-  # Creates and adds a new trigger entity to the scene.
+  # Copies a prototype Entity into the scene.
   #
-  #   name: String
-  #   position: Vector2
-  #   shape: Path
-  #   transform: Transform
-  'PutTrigger'
+  # proto: Entity
+  # transform: Transform
+  'StampPrototype'
 
-  # Creates and adds a new character entity to the scene.
-  #
-  #   name: String
-  #   spriteId: String
-  #   position: Vector2
-  #   transform: Transform
-  'PutCharacter'
+  # # Creates and adds a new trigger entity to the scene.
+  # #
+  # #   name: String
+  # #   position: Vector2
+  # #   shape: Path
+  # #   transform: Transform
+  # 'PutTrigger'
 
-  # Creates and adds a new machine entity to the scene.
-  #
-  #   name: String
-  #   machine: Machine
-  #   position: Vector2
-  #   transform: Transform
-  'PutMachine'
+  # # Creates and adds a new character entity to the scene.
+  # #
+  # #   name: String
+  # #   spriteId: String
+  # #   position: Vector2
+  # #   transform: Transform
+  # 'PutCharacter'
+
+  # # Creates and adds a new machine entity to the scene.
+  # #
+  # #   name: String
+  # #   machine: Machine
+  # #   position: Vector2
+  # #   transform: Transform
+  # 'PutMachine'
 
   # Parents one entity to another.
   #
