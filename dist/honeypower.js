@@ -3416,7 +3416,7 @@ module.exports = exports['default'];
 },{"./freeze":74,"./util/curry":84}],90:[function(require,module,exports){
 var editorActions, entityActions, registerAction, sceneActions;
 
-editorActions = ['AddEntity', 'RemoveEntity', 'StampPrototype', 'SetParent', 'GiveMachineToCharacter'];
+editorActions = ['RemoveEntity', 'StampPrototype', 'SetParent', 'GiveMachineToCharacter'];
 
 sceneActions = [];
 

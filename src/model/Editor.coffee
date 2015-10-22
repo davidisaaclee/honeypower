@@ -9,8 +9,11 @@ Represents the application view for creating and editing Scenes.
 Editor ::=
   # The Scene being modified.
   scene: Scene
-  # Entity prototypes which can be copied onto the scene and modified.
-  prototypes: [Entity]
+  # # Entity prototypes which can be copied onto the scene and modified.
+  # prototypes: [Entity]
+
+  # All active Kits.
+  kits: { id -> Kit }
 ###
 class Editor extends Model
   @make: (scene, prototypes = Set.withHashFunction ({protoKey}) -> protoKey) ->
