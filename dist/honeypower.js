@@ -3416,7 +3416,7 @@ module.exports = exports['default'];
 },{"./freeze":74,"./util/curry":84}],90:[function(require,module,exports){
 var editorActions, entityActions, registerAction, sceneActions;
 
-editorActions = ['RemoveEntity', 'StampPrototype', 'SetParent', 'GiveMachineToCharacter'];
+editorActions = ['StampPrototype', 'RemoveEntity', 'TransformEntity', 'LinkEntities', 'RequestEntityEditor', 'RegisterTimeline', 'AttachTimeline', 'DetachTimeline', 'SetTimelinePlaybackMethod'];
 
 sceneActions = [];
 
@@ -3799,7 +3799,7 @@ Transform = (function(superClass) {
       rotation = 0;
     }
     if (scale == null) {
-      scale = Vector2.zero;
+      scale = Vector2.make(1, 1);
     }
     return _.assign(new Transform(), {
       position: position,
@@ -3812,6 +3812,14 @@ Transform = (function(superClass) {
 
   Transform.withPosition = function(position) {
     return Transform.make(position);
+  };
+
+  Transform.withRotation = function(rotation) {
+    return Transform.make(null, rotation, null);
+  };
+
+  Transform.withScale = function(scale) {
+    return Transform.make(null, null, scale);
   };
 
   Transform.getPosition = function(transform) {
@@ -4010,11 +4018,30 @@ Simple immutable set implementation.
 Set = (function() {
   function Set() {}
 
-  Set.withHashFunction = function(hashFunction) {
-    return _.assign(new Set(), {
+  Set.withHashFunction = function(hashFunction, initial) {
+    var set;
+    if (initial == null) {
+      initial = [];
+    }
+    set = _.assign(new Set(), {
       _hash: hashFunction,
       _elements: Object.freeze({})
     });
+    return initial.reduce(Set.put, set);
+  };
+
+  Set.withHashProperty = function(hashProperty, initial) {
+    var set;
+    if (initial == null) {
+      initial = [];
+    }
+    set = _.assign(new Set(), {
+      _hash: function(obj) {
+        return obj[hashProperty];
+      },
+      _elements: Object.freeze({})
+    });
+    return initial.reduce(Set.put, set);
   };
 
   Set.get = function(set, hash) {

@@ -1,26 +1,64 @@
 editorActions = [
+  # Editing scene
+
+  # Copies a prototype Entity into the scene.
+  #
+  # proto: String
+  # transform: Transform
+  # [onto: String | null]
+  #   set to null or undefined for placing directly into scene
+  'StampPrototype'
+
   # Removes (deletes) an entity from the scene.
   #
   #   entity: String
   'RemoveEntity'
 
-  # Copies a prototype Entity into the scene.
-  #
-  # proto: Entity
-  # transform: Transform
-  'StampPrototype'
 
-  # Parents one entity to another.
+  # Editing entities
+
+  # Transform an `Entity`'s static transform.
+  #
+  #  entity: String
+  #  transform: Transform
+  'TransformEntity'
+
+  # Links one entity to another. This will behave differently according to the
+  #  types of `Entity`s.
   #
   #  parent: String
   #  child: String
-  'SetParent'
+  'LinkEntities'
 
-  # Empowers a Character with a Machine.
+  # Request specific editor for the specified `Entity`.
   #
-  #  character: String
-  #  machine: String
-  'GiveMachineToCharacter'
+  #   entity: String
+  'RequestEntityEditor'
+
+
+  # Timelines
+
+  # Registers a new Darko timeline, optionally attaching it to an `Entity`.
+  #
+  #   mapping: (data, progress) -> data
+  #   [entity: String]
+  'RegisterTimeline'
+
+  # Attach a timeline to an entity.
+  #   timeline: String
+  #   entity: String
+  'AttachTimeline'
+
+  # Detach a timeline from an entity.
+  #   timeline: String
+  #   entity: String
+  'DetachTimeline'
+
+  # Set how the specified timeline will be controlled.
+  #
+  #  timeline: String
+  #  playbackMethod: ‘time’ | ‘touchX’ | ‘touchY’ | etc
+  'SetTimelinePlaybackMethod'
 ]
 
 
@@ -44,9 +82,9 @@ entityActions = [
   # Transform an entity.
   #
   #  entity: String
-  #  translate: Vector2
-  #  rotate: Number
-  #  scale: Vector2
+  #  [translate: Vector2]
+  #  [rotate: Number]
+  #  [scale: Vector2]
   'TransformEntity'
 ]
 

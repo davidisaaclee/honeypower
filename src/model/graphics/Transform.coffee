@@ -14,7 +14,7 @@ Transform ::=
   scale: Vector2
 ###
 class Transform extends Model
-  @make: (position = Vector2.zero, rotation = 0, scale = Vector2.zero) ->
+  @make: (position = Vector2.zero, rotation = 0, scale = (Vector2.make 1, 1)) ->
     _.assign (new Transform()),
       position: position
       rotation: rotation
@@ -24,6 +24,12 @@ class Transform extends Model
 
   @withPosition: (position) ->
     Transform.make position
+
+  @withRotation: (rotation) ->
+    Transform.make null, rotation, null
+
+  @withScale: (scale) ->
+    Transform.make null, null, scale
 
 
   # Access

@@ -4,10 +4,19 @@ _ = require 'lodash'
 Simple immutable set implementation.
 ###
 class Set
-  @withHashFunction: (hashFunction) ->
-    _.assign (new Set()),
+  @withHashFunction: (hashFunction, initial = []) ->
+    set = _.assign (new Set()),
       _hash: hashFunction
       _elements: Object.freeze {}
+
+    initial.reduce Set.put, set
+
+  @withHashProperty: (hashProperty, initial = []) ->
+    set = _.assign (new Set()),
+      _hash: (obj) -> obj[hashProperty]
+      _elements: Object.freeze {}
+
+    initial.reduce Set.put, set
 
 
   # Access

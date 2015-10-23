@@ -43,4 +43,5 @@ class Scene extends Model
     _.assign {}, scene,
       entities: Set.remove scene.entities, entity
 
+
 module.exports = Scene

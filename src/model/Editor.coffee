@@ -1,5 +1,7 @@
 _ = require 'lodash'
 Model = require './Model'
+Scene = require './Scene'
+Kit = require './Kit'
 
 Set = require '../util/Set'
 
@@ -9,25 +11,40 @@ Represents the application view for creating and editing Scenes.
 Editor ::=
   # The Scene being modified.
   scene: Scene
-  # # Entity prototypes which can be copied onto the scene and modified.
-  # prototypes: [Entity]
 
   # All active Kits.
   kits: { id -> Kit }
 ###
+
 class Editor extends Model
-  @make: (scene, prototypes = Set.withHashFunction ({protoKey}) -> protoKey) ->
+  @make: (scene, kits = []) ->
+    kitSet = kits.reduce Set.put, Set.withHashProperty 'name'
+
     _.assign (new Editor()),
       scene: scene
-      prototypes: prototypes
+      kits: kitSet
 
   @empty: Object.freeze Editor.make()
+
+  @withKits: (kits = []) -> Editor.make Scene.empty, kits
 
 
   # Access
 
   @getPrototype: (editor, protoKey) ->
-    Set.get editor.prototypes, protoKey
+    results = Set.asArray editor.kits
+      .map (kit) -> Kit.getPrototype kit, protoKey
+      .filter (x) -> x?
+
+    switch results.length
+      when 0
+        undefined
+      when 1
+        results[0]
+      else
+        console.warn 'More than one prototype with key', protoKey
+        results[0]
+
 
   # Creates a stamped copy of the specified prototype entity.
   @stampPrototype: (editor, protoKey) ->
