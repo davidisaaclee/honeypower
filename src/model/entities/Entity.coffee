@@ -10,19 +10,19 @@ Entity ::=
   id: String
   name: String | null
   transform: Transform
-  children: [Entity]
+  child: Entity
 ###
 class Entity extends Model
   @make: do ->
     _spawnCount = 0
     _nextId = () -> "entity-#{_spawnCount++}"
 
-    return (name = null, transform = Transform.default, children = []) ->
+    return (name = null, transform = Transform.default, child = null, proto) ->
       _.assign (new Entity()),
         id: _nextId()
         name: name
         transform: transform
-        children: children
+        child: child
 
 
   # Access
@@ -31,7 +31,7 @@ class Entity extends Model
 
   @getName: (entity) -> entity.name
 
-  @getChildren: (entity) -> entity.children
+  @getChild: (entity) -> entity.child
 
   @getPosition: (entity) -> Transform.getPosition entity.transform
 
@@ -42,17 +42,23 @@ class Entity extends Model
 
   # Mutation
 
-  @addChild: (entity, child) ->
+  # entity [Entity] - to be parent
+  # child [Entity]
+  @setChild: (entity, child) ->
     _.assign {}, entity,
-      children: [entity.children..., child]
+      child: child
 
-  @removeChild: (entity, childId) ->
-    idx = _.findIndex (Entity.getChildren entity), (child) -> child.id is childId
-    if idx isnt -1
-    then _.assign {}, entity,
-        children: [ (entity.children.splice 0, idx)...,
-                    (entity.children.splice (idx + 1))... ]
-    else entity
+  # @removeChild: (entity, childId) ->
+  #   idx = _.findIndex (Entity.getChildren entity), (child) -> child.id is childId
+  #   if idx isnt -1
+  #   then _.assign {}, entity,
+  #       children: [ (entity.children.splice 0, idx)...,
+  #                   (entity.children.splice (idx + 1))... ]
+  #   else entity
+
+  @removeChild: (entity) ->
+    _.assign {}, entity,
+      child: null
 
   @transform: (entity, {translate, rotate, scale}) ->
     if translate?

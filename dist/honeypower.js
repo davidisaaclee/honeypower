@@ -3546,7 +3546,7 @@ module.exports = Model;
 
 
 },{}],93:[function(require,module,exports){
-var Model, Scene, Set, _, u,
+var Entity, Model, Scene, Set, _, u,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
 
@@ -3555,6 +3555,8 @@ _ = require('lodash');
 u = require('updeep');
 
 Model = require('./Model');
+
+Entity = require('./entities/Entity');
 
 Set = require('../util/Set');
 
@@ -3580,15 +3582,13 @@ Scene = (function(superClass) {
     });
   };
 
-  Scene.empty = Object.freeze(Scene.make(Set.withHashFunction(function(arg) {
-    var id;
-    id = arg.id;
-    return id;
-  })));
+  Scene.empty = Object.freeze(Scene.make(Set.withHashProperty('id')));
 
   Scene.getEntity = function(scene, entityId) {
     return Set.get(scene.entities, entityId);
   };
+
+  Scene.getEntityById = Scene.getEntity;
 
   Scene.getEntityByName = function(scene, entityName) {
     return Set.find(scene.entities, {
@@ -3612,8 +3612,51 @@ Scene = (function(superClass) {
 
   Scene.removeEntity = function(scene, entityId) {
     return _.assign({}, scene, {
-      entities: Set.remove(scene.entities, entity)
+      entities: Set.remove(scene.entities, Set.get(scene.entities, entityId))
     });
+  };
+
+  Scene.linkEntitiesById = function(scene, parentId, childId) {
+    var child, newScene, offendingIds, parent;
+    parent = Scene.getEntity(scene, parentId);
+    child = Scene.getEntity(scene, childId);
+    if ((parent != null) && (child != null)) {
+      newScene = scene;
+      newScene = Scene.mutateEntity(newScene, parent.id, function(e) {
+        return Entity.setChild(e, child);
+      });
+      return newScene;
+    } else {
+      offendingIds = parent != null ? [childId] : child != null ? [parentId] : [parentId, childId];
+      if (offendingIds.length === 1) {
+        throw new Error("Attempted to link invalid entities " + parentId + " -> " + childId + ".\n(" + offendingIds[0] + " does not exist.)");
+      } else {
+        throw new Error("Attempted to link invalid entities " + parentId + " -> " + childId + ".\n(Neither exists.)");
+      }
+    }
+  };
+
+
+  /*
+  Mutates an entity in a provided callback.
+  
+    scene [Scene] - the invoking `Scene`
+    entityId [String] - the id of the entity to be modified
+    proc [Function<Entity, Entity>] - procedure which takes in the specified
+      `Entity` and returns a modified copy of the `Entity`. this procedure is
+      not called if no `Entity` with ID `entityId` exists in this `Scene`.
+   */
+
+  Scene.mutateEntity = function(scene, entityId, proc) {
+    var entity;
+    entity = Scene.getEntity(scene, entityId);
+    if (entity != null) {
+      return _.assign({}, scene, {
+        entities: Set.put(scene.entities, proc(entity))
+      });
+    } else {
+      return scene;
+    }
   };
 
   return Scene;
@@ -3623,11 +3666,10 @@ Scene = (function(superClass) {
 module.exports = Scene;
 
 
-},{"../util/Set":99,"./Model":92,"lodash":"lodash","updeep":77}],94:[function(require,module,exports){
+},{"../util/Set":99,"./Model":92,"./entities/Entity":94,"lodash":"lodash","updeep":77}],94:[function(require,module,exports){
 var Entity, Model, Transform, _,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  hasProp = {}.hasOwnProperty,
-  slice = [].slice;
+  hasProp = {}.hasOwnProperty;
 
 _ = require('lodash');
 
@@ -3643,7 +3685,7 @@ Entity ::=
   id: String
   name: String | null
   transform: Transform
-  children: [Entity]
+  child: Entity
  */
 
 Entity = (function(superClass) {
@@ -3659,21 +3701,21 @@ Entity = (function(superClass) {
     _nextId = function() {
       return "entity-" + (_spawnCount++);
     };
-    return function(name, transform, children) {
+    return function(name, transform, child, proto) {
       if (name == null) {
         name = null;
       }
       if (transform == null) {
         transform = Transform["default"];
       }
-      if (children == null) {
-        children = [];
+      if (child == null) {
+        child = null;
       }
       return _.assign(new Entity(), {
         id: _nextId(),
         name: name,
         transform: transform,
-        children: children
+        child: child
       });
     };
   })();
@@ -3686,8 +3728,8 @@ Entity = (function(superClass) {
     return entity.name;
   };
 
-  Entity.getChildren = function(entity) {
-    return entity.children;
+  Entity.getChild = function(entity) {
+    return entity.child;
   };
 
   Entity.getPosition = function(entity) {
@@ -3702,24 +3744,16 @@ Entity = (function(superClass) {
     return Transform.getScale(entity.transform);
   };
 
-  Entity.addChild = function(entity, child) {
+  Entity.setChild = function(entity, child) {
     return _.assign({}, entity, {
-      children: slice.call(entity.children).concat([child])
+      child: child
     });
   };
 
-  Entity.removeChild = function(entity, childId) {
-    var idx;
-    idx = _.findIndex(Entity.getChildren(entity), function(child) {
-      return child.id === childId;
+  Entity.removeChild = function(entity) {
+    return _.assign({}, entity, {
+      child: null
     });
-    if (idx !== -1) {
-      return _.assign({}, entity, {
-        children: slice.call(entity.children.splice(0, idx)).concat(slice.call(entity.children.splice(idx + 1)))
-      });
-    } else {
-      return entity;
-    }
   };
 
   Entity.transform = function(entity, arg) {
@@ -3834,6 +3868,10 @@ Transform = (function(superClass) {
     return transform.scale;
   };
 
+  Transform.applyTransform = function(transformA, transformB) {
+    return Transform.make(Vector2.add(transformA.position, transformB.position), transformA.rotation + transformB.rotation, Vector2.piecewiseMultiply(transformA.scale, transformB.scale));
+  };
+
   Transform.translate = function(transform, amount) {
     return _.assign({}, transform, {
       position: Vector2.add(transform.position, amount)
@@ -3909,6 +3947,10 @@ Vector2 = (function(superClass) {
     return Vector2.make(-v.x, -v.y);
   };
 
+  Vector2.piecewiseMultiply = function(v1, v2) {
+    return Vector2.make(v1.x * v2.x, v1.y * v2.y);
+  };
+
   return Vector2;
 
 })(Model);
@@ -3943,26 +3985,10 @@ Reducer for all actions contained within entities.
  */
 
 reducer = function(state, action) {
-  var entity, entityId, newEntity, ref, rotate, scale, translate;
   if (state == null) {
     state = defaultState;
   }
-  switch (action.type) {
-    case k.TransformEntity:
-      ref = action.data, entityId = ref.entityId, translate = ref.translate, rotate = ref.rotate, scale = ref.scale;
-      if (Set.contains(state, entityId)) {
-        entity = Set.get(state, entityId);
-        newEntity = Entity.transform(entity, {
-          translate: translate,
-          rotate: rotate,
-          scale: scale
-        });
-        return Set.put(state, newEntity);
-      }
-      break;
-    default:
-      return state;
-  }
+  return state;
 };
 
 module.exports = reducer;
@@ -4049,6 +4075,7 @@ Set = (function() {
   };
 
   Set.contains = function(set, element) {
+    console.log('contains', set, element);
     return set._elements[set._hash(element)] != null;
   };
 
@@ -4081,9 +4108,7 @@ Set = (function() {
     var hash;
     hash = set._hash(element);
     return _.assign({}, set, {
-      _elements: _.omit(set._elements, function(value, key) {
-        return key === hash;
-      })
+      _elements: _.omit(set._elements, hash)
     });
   };
 

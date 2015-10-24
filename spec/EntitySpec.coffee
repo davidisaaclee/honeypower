@@ -27,15 +27,17 @@ describe 'Entities', () ->
       .toEqual 0
 
 
-  xit 'can add children', () ->
-    @store.dispatch
-      type: k.AddChild
-      data:
-        parent: birdoId
-        child: kiddoId
+  # these are covered by EditorSpec...
+
+  # xit 'can add children', () ->
+  #   @store.dispatch
+  #     type: k.AddChild
+  #     data:
+  #       parent: birdoId
+  #       child: kiddoId
 
 
-  xit 'can remove children', () ->
+  # xit 'can remove children', () ->
 
 
-  xit 'can transform', () ->
+  # xit 'can transform', () ->

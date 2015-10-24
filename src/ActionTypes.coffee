@@ -3,10 +3,11 @@ editorActions = [
 
   # Copies a prototype Entity into the scene.
   #
-  # proto: String
-  # transform: Transform
-  # [onto: String | null]
-  #   set to null or undefined for placing directly into scene
+  #   proto: String
+  #   transform: Transform
+  #   name: String
+  #   [onto: String | null]
+  #     set to null or undefined for placing directly into scene
   'StampPrototype'
 
   # Removes (deletes) an entity from the scene.
@@ -19,15 +20,15 @@ editorActions = [
 
   # Transform an `Entity`'s static transform.
   #
-  #  entity: String
-  #  transform: Transform
+  #   entity: String
+  #   transform: Transform
   'TransformEntity'
 
   # Links one entity to another. This will behave differently according to the
   #  types of `Entity`s.
   #
-  #  parent: String
-  #  child: String
+  #   parent: String
+  #   child: String
   'LinkEntities'
 
   # Request specific editor for the specified `Entity`.
@@ -36,6 +37,7 @@ editorActions = [
   'RequestEntityEditor'
 
 
+  # TODO: still need to test all timeline actions
   # Timelines
 
   # Registers a new Darko timeline, optionally attaching it to an `Entity`.
@@ -56,8 +58,8 @@ editorActions = [
 
   # Set how the specified timeline will be controlled.
   #
-  #  timeline: String
-  #  playbackMethod: ‘time’ | ‘touchX’ | ‘touchY’ | etc
+  #   timeline: String
+  #   playbackMethod: 'time' | 'touchX' | 'touchY' | etc
   'SetTimelinePlaybackMethod'
 ]
 

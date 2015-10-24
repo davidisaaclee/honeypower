@@ -25,6 +25,7 @@ class Set
     set._elements[hash]
 
   @contains: (set, element) ->
+    console.log 'contains', set, element
     set._elements[set._hash element]?
 
   @count: (set) ->
@@ -53,7 +54,7 @@ class Set
     hash = set._hash element
 
     _.assign {}, set,
-      _elements: _.omit set._elements, (value, key) -> key is hash
+      _elements: _.omit set._elements, hash
 
 
 module.exports = Set

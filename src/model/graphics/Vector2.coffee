@@ -34,4 +34,9 @@ class Vector2 extends Model
   @negate: (v) ->
     Vector2.make -v.x, -v.y
 
+  @piecewiseMultiply: (v1, v2) ->
+    Vector2.make \
+      v1.x * v2.x,
+      v1.y * v2.y
+
 module.exports = Vector2

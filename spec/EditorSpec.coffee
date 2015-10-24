@@ -4,16 +4,20 @@ editorReducer = require '../src/reducers/EditorReducer'
 Scene = require '../src/model/Scene'
 Editor = require '../src/model/Editor'
 Kit = require '../src/model/Kit'
+Prototype = require '../src/model/Prototype'
 Entity = require '../src/model/entities/Entity'
 Vector2 = require '../src/model/graphics/Vector2'
 Transform = require '../src/model/graphics/Transform'
 
 describe 'Editor actions:', () ->
   beforeEach () ->
-    birdo = Entity.make 'birdo'
-    kiddo = Entity.make 'kiddo'
+    birdo = Entity.make 'birdoProto'
+    kiddo = Entity.make 'kiddoProto'
 
-    birdoKiddoKit = Kit.with 'birdoKiddo', [birdo, kiddo], [], []
+    birdoProto = Prototype.make 'birdo', birdo
+    kiddoProto = Prototype.make 'kiddo', kiddo
+
+    birdoKiddoKit = Kit.with 'birdoKiddo', [birdoProto, kiddoProto], [], []
 
     initialState = Editor.withKits [birdoKiddoKit]
 
@@ -26,13 +30,22 @@ describe 'Editor actions:', () ->
     expect (Scene.getAllEntities editor.scene)
       .toEqual []
 
+
   it '(kit access)', () ->
     expect (Editor.getPrototype @store.getState(), 'birdo')
       .toBeDefined()
 
 
+  # Copies a prototype Entity into the scene.
+  #
+  #   proto: String
+  #   transform: Transform
+  #   name: String
+  #   [onto: String | null]
+  #     set to null or undefined for placing directly into scene
   it 'StampPrototype (onto scene)', () ->
-    expect Entity.getPosition (Editor.getPrototype @store.getState(), 'birdo')
+    birdoProto = Editor.getPrototype @store.getState(), 'birdo'
+    expect Entity.getPosition (Prototype.getDefinition birdoProto)
       .toEqual (Vector2.make 0, 0)
     expect (Scene.getAllEntities @store.getState().scene)
       .toEqual []
@@ -42,29 +55,35 @@ describe 'Editor actions:', () ->
       data:
         proto: 'birdo'
         onto: null
+        name: 'birdoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
     expect (Scene.getAllEntities @store.getState().scene).length
       .toBe 1
     expect Entity.getName (Scene.getAllEntities @store.getState().scene)[0]
-      .toEqual 'birdo'
+      .toEqual 'birdoStamp'
     expect Entity.getPosition (Scene.getAllEntities @store.getState().scene)[0]
       .toEqual (Vector2.make 10, 10)
-    expect Entity.getPosition (Editor.getPrototype @store.getState(), 'birdo')
+    birdoProto = Editor.getPrototype @store.getState(), 'birdo'
+    expect Entity.getPosition (Prototype.getDefinition birdoProto)
       .toEqual (Vector2.make 0, 0)
 
 
-  xit 'RemoveEntity', () ->
+  # Removes (deletes) an entity from the scene.
+  #
+  #   entity: String
+  it 'RemoveEntity', () ->
     @store.dispatch
       type: k.StampPrototype
       data:
         proto: 'birdo'
         onto: null
+        name: 'birdoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
     expect (Scene.getAllEntities @store.getState().scene).length
       .toBe 1
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdo'
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
 
     @store.dispatch
       type: k.RemoveEntity
@@ -74,21 +93,64 @@ describe 'Editor actions:', () ->
     expect (Scene.getAllEntities @store.getState().scene).length
       .toBe 0
 
-
-  # Transform an `Entity`'s static transform.
-  #
-  #  entity: String
-  #  transform: Transform
-  xit 'TransformEntity', () ->
-    initialPosition = Vector2.make 10, 10
     @store.dispatch
       type: k.StampPrototype
       data:
         proto: 'birdo'
         onto: null
+        name: 'birdoStamp'
+        transform: Transform.withPosition (Vector2.make 10, 10)
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        proto: 'kiddo'
+        onto: null
+        name: 'kiddoStamp'
+        transform: Transform.withPosition (Vector2.make 10, 10)
+
+    expect (Scene.getAllEntities @store.getState().scene).length
+      .toBe 2
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+
+    @store.dispatch
+      type: k.RemoveEntity
+      data:
+        entity: birdoInstance.id
+
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    kiddoInstance = Scene.getEntityByName @store.getState().scene, 'kiddoStamp'
+
+    expect (Scene.getAllEntities @store.getState().scene).length
+      .toBe 1
+    expect birdoInstance
+      .toBeUndefined()
+    expect kiddoInstance
+      .toBeDefined()
+
+    @store.dispatch
+      type: k.RemoveEntity
+      data:
+        entity: kiddoInstance.id
+
+    expect (Scene.getAllEntities @store.getState().scene).length
+      .toBe 0
+
+
+  # Transform an `Entity`'s static transform.
+  #
+  #  entity: String
+  #  transform: Transform
+  it 'TransformEntity', () ->
+    initialPosition = Vector2.make 10, 10
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        proto: 'birdo'
+        name: 'birdoStamp'
+        onto: null
         transform: Transform.withPosition initialPosition
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdo'
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
     expect Entity.getPosition birdoInstance
       .toEqual initialPosition
     expect Entity.getRotation birdoInstance
@@ -104,6 +166,7 @@ describe 'Editor actions:', () ->
         entity: birdoInstance.id
         transform: Transform.withPosition translationAmount
 
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
     expect Entity.getPosition birdoInstance
       .toEqual (Vector2.add initialPosition, translationAmount)
     expect Entity.getRotation birdoInstance
@@ -121,10 +184,11 @@ describe 'Editor actions:', () ->
         entity: birdoInstance.id
         transform: xform
 
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
     expect Entity.getPosition birdoInstance
       .toEqual (Vector2.add initialPosition, (Vector2.scale translationAmount, 2))
     expect Entity.getRotation birdoInstance
-      .toEqual (Math.PI / 2)
+      .toBeCloseTo (Math.PI / 2)
     expect Entity.getScale birdoInstance
       .toEqual (Vector2.make 2, 1)
 
@@ -134,84 +198,113 @@ describe 'Editor actions:', () ->
         entity: birdoInstance.id
         transform: Transform.withScale (Vector2.make 3, 2)
 
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
     expect Entity.getPosition birdoInstance
       .toEqual (Vector2.add initialPosition, (Vector2.scale translationAmount, 2))
     expect Entity.getRotation birdoInstance
-      .toEqual (Math.PI / 2)
+      .toBeCloseTo (Math.PI / 2)
     expect Entity.getScale birdoInstance
       .toEqual (Vector2.make 6, 2)
 
 
-
-
-
-
-  # Pending specs
-
-  xit 'StampPrototype (onto entities)', () ->
+  # Copies a prototype Entity into the scene.
+  #
+  #   proto: String
+  #   transform: Transform
+  #   name: String
+  #   [onto: String | null]
+  #     set to null or undefined for placing directly into scene
+  it 'StampPrototype (onto entities)', () ->
     @store.dispatch
       type: k.StampPrototype
       data:
         proto: 'birdo'
         onto: null
+        name: 'birdoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdo'
+    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
 
     @store.dispatch
       type: k.StampPrototype
       data:
         proto: 'kiddo'
+        name: 'kiddoStamp'
         onto: birdoInstance.id
         transform: Transform.withPosition (Vector2.make 0, 0)
 
-
-  xit 'LinkEntities', () ->
-    assertPure (() => @store.getState()), () =>
-      @store.dispatch
-        type: k.StampPrototype
-        data:
-          proto: 'birdo'
-          transform: Transform.withPosition (Vector2.make 10, 10)
-
-      @store.dispatch
-        type: k.StampPrototype
-        data:
-          proto: 'kiddo'
-          transform: Transform.withPosition (Vector2.make 10, 10)
-
-      birdoInstance_ = Scene.getEntityByName @store.getState().scene, 'birdo'
-      kiddoInstance_ = Scene.getEntityByName @store.getState().scene, 'kiddo'
-
-      @store.dispatch
-        type: k.LinkEntities
-        data:
-          parent: birdoInstance_.id
-          child: kiddoInstance_.id
-
-      scene = @store.getState().scene
-
-    birdoInstance = Scene.getEntityByName scene, 'birdo'
+    birdoInstance =
+      Scene.getEntityByName @store.getState().scene, 'birdoStamp'
     expect birdoInstance
       .toBeDefined()
 
-    # Names of children entities:
-    #   Uncertain about this; and names are not very important anyways.
-    #
-    # kiddoInstance = Scene.getEntityByName scene, 'kiddo'
-    # expect kiddoInstance
-    #   .toBeDefined()
+    kiddoInstance =
+      Scene.getEntityByName @store.getState().scene, 'kiddoStamp'
+    expect kiddoInstance
+      .toBeDefined()
+
+    expect Entity.getChild birdoInstance
+      .not.toBeNull()
+    expect (Entity.getChild birdoInstance).name
+      .toBe 'kiddoStamp'
+    expect Entity.getChild birdoInstance
+      .toEqual kiddoInstance
+    expect Entity.getChild kiddoInstance
+      .toBeNull()
+
+
+  # Links one entity to another. This will behave differently according to the
+  #  types of `Entity`s.
+  #
+  #   parent: String
+  #   child: String
+  it 'LinkEntities', () ->
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        proto: 'birdo'
+        name: 'birdoStamp'
+        transform: Transform.withPosition (Vector2.make 10, 10)
+
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        proto: 'kiddo'
+        name: 'kiddoStamp'
+        transform: Transform.withPosition (Vector2.make 10, 10)
+
+    birdoInstance_ =
+      Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    kiddoInstance_ =
+      Scene.getEntityByName @store.getState().scene, 'kiddoStamp'
+
+    @store.dispatch
+      type: k.LinkEntities
+      data:
+        parent: birdoInstance_.id
+        child: kiddoInstance_.id
+
+    scene = @store.getState().scene
+    birdoInstance = Scene.getEntityByName scene, 'birdoStamp'
+    expect birdoInstance
+      .toBeDefined()
+
+    kiddoInstance = Scene.getEntityByName scene, 'kiddoStamp'
+    expect kiddoInstance
+      .toBeDefined()
 
     expect Entity.getChild birdoInstance
       .toBeDefined()
-    expect Entity.getChild birdoInstance
-      .toMatchObject
-        name: 'kiddo'
+    expect (Entity.getChild birdoInstance).name
+      .toEqual 'kiddoStamp'
     expect Entity.getChild (Entity.getChild birdoInstance)
-      .toBeUndefined()
+      .toBeNull()
 
 
   # TODO: this has a bunch of new specs about registering kits
+  # Request specific editor for the specified `Entity`.
+  #
+  #   entity: String
   xit 'RequestEntityEditor', () ->
     eddy = Entity.make 'eddy'
     eddy.customEditor = 'bearInspector'

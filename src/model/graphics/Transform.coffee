@@ -43,6 +43,12 @@ class Transform extends Model
 
   # Mutation
 
+  @applyTransform: (transformA, transformB) ->
+    Transform.make \
+      (Vector2.add transformA.position, transformB.position),
+      (transformA.rotation + transformB.rotation),
+      (Vector2.piecewiseMultiply transformA.scale, transformB.scale)
+
   @translate: (transform, amount) ->
     _.assign {}, transform,
       position: Vector2.add transform.position, amount

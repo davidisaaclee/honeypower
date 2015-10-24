@@ -2,6 +2,7 @@ _ = require 'lodash'
 Model = require './Model'
 Scene = require './Scene'
 Kit = require './Kit'
+Prototype = require './Prototype'
 
 Set = require '../util/Set'
 
@@ -47,9 +48,14 @@ class Editor extends Model
 
 
   # Creates a stamped copy of the specified prototype entity.
-  @stampPrototype: (editor, protoKey) ->
+  #
+  #   editor [Editor] - invoking `Editor`
+  #   protoKey [String] - the `Prototype`'s registered key
+  #   [name [String]] - a name for the new stamped `Entity`
+  @stampPrototype: (editor, protoKey, name) ->
     proto = Editor.getPrototype editor, protoKey
-    _.assign {}, (_.omit proto, 'protoKey')
+    # _.assign {}, (_.omit proto, 'protoKey')
+    Prototype.stamp proto, name
 
 
   # Mutation
