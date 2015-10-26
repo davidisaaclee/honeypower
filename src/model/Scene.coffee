@@ -12,11 +12,20 @@ Scene ::=
   entities: { String -> Entity }
 ###
 class Scene extends Model
-  @make: (entities) ->
+  @make: (entities, timelines) ->
     _.assign (new Scene()),
       entities: entities
+      timelines: timelines
 
-  @empty: Object.freeze Scene.make (Set.withHashProperty 'id')
+  @with: (entitiesArray = [], timelineArray = []) ->
+    Scene.make \
+      (entitiesArray.reduce Set.put, Set.withHashProperty 'id'),
+      (timelineArray.reduce Set.put, Set.withHashProperty 'id')
+
+  @empty: Object.freeze \
+    Scene.make \
+      (Set.withHashProperty 'id'),
+      (Set.withHashProperty 'id')
 
 
   # Access
@@ -34,6 +43,13 @@ class Scene extends Model
 
   @getAllEntities: (scene) ->
     Set.asArray scene.entities
+
+
+  @getTimelineById: (scene, timelineId) ->
+    Set.get scene.timelines, timelineId
+
+  @getAllTimelines: (scene) ->
+    Set.asArray scene.timelines
 
 
   # Mutation
@@ -56,6 +72,7 @@ class Scene extends Model
         Entity.setChild e, child
       return newScene
     else
+      # this is just being too committed to error messages, ignore
       offendingIds =
         if parent?
         then [childId]
@@ -73,6 +90,7 @@ class Scene extends Model
           Attempted to link invalid entities #{parentId} -> #{childId}.
           (Neither exists.)"""
 
+
   ###
   Mutates an entity in a provided callback.
 
@@ -86,6 +104,28 @@ class Scene extends Model
     entity = Scene.getEntity scene, entityId
     if entity?
     then _.assign {}, scene, entities: (Set.put scene.entities, proc entity)
+    else scene
+
+
+  @addTimeline: (scene, timeline) ->
+    _.assign {}, scene,
+      timelines: Set.put scene.timelines, timeline
+
+
+  @removeTimelineById: (scene, timelineId) ->
+    toRemove = Set.get scene.timelines, timelineId
+    _.assign {}, scene,
+      timelines: Set.remove scene.timelines, toRemove
+
+
+  @attachEntityToTimeline: (scene, entityId, timelineId, initialProgress = 0) ->
+    # TODO
+
+
+  @mutateTimeline: (scene, timelineId, proc) ->
+    timeline = Scene.getTimelineById scene, timelineId
+    if timeline?
+    then _.assign {}, scene, timelines: (Set.put scene.timelines, proc timeline)
     else scene
 
 

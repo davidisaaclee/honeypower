@@ -40,10 +40,16 @@ editorActions = [
   # TODO: still need to test all timeline actions
   # Timelines
 
-  # Registers a new Darko timeline, optionally attaching it to an `Entity`.
+  # # Registers a new Darko timeline, optionally attaching it to an `Entity`.
+  # #
+  # #   mapping: (data, progress) -> data
+  # #   [entity: String]
+  # 'RegisterTimeline'
+
+  # Registers a new Darko timeline.
   #
-  #   mapping: (data, progress) -> data
-  #   [entity: String]
+  #   class: String     # class of this timeline
+  #   data: Object      # data specific to the timeline class
   'RegisterTimeline'
 
   # Attach a timeline to an entity.
@@ -65,6 +71,10 @@ editorActions = [
 
 
 sceneActions = [
+  # Denotes the passing of time. Can be positive, zero, or negative.
+  #
+  #   delta: Number
+  'DeltaTime'
 ]
 
 

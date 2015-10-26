@@ -13,7 +13,7 @@ addChildReducers = require '../util/addChildReducers'
 clamp = require '../util/clamp'
 wrap = require '../util/wrap'
 
-entitiesReducer = require './EntityReducer'
+# entitiesReducer = require './EntityReducer'
 
 reducer = (state = Scene.empty, action) ->
   state
@@ -26,5 +26,4 @@ reducer = (state = Scene.empty, action) ->
   #   else state
 
 
-module.exports = addChildReducers reducer,
-  'entities': entitiesReducer
+module.exports = reducer

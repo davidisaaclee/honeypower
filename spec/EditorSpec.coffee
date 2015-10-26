@@ -7,6 +7,7 @@ Kit = require '../src/model/Kit'
 Prototype = require '../src/model/Prototype'
 Entity = require '../src/model/entities/Entity'
 Vector2 = require '../src/model/graphics/Vector2'
+Path = require '../src/model/graphics/Path'
 Transform = require '../src/model/graphics/Transform'
 
 describe 'Editor actions:', () ->
@@ -299,6 +300,48 @@ describe 'Editor actions:', () ->
       .toEqual 'kiddoStamp'
     expect Entity.getChild (Entity.getChild birdoInstance)
       .toBeNull()
+
+
+  # Registers a new Darko timeline.
+  #
+  #   class: String     # class of this timeline
+  #   data: Object      # data specific to the timeline class
+  it 'RegisterTimeline', () ->
+    @store.dispatch
+      type: k.RegisterTimeline
+      data:
+        class: 'PathTimeline'
+        data:
+          path: Path.make (Vector2.make 0, 0), [
+            Vector2.make 0, 0
+            Vector2.make 1, 0
+          ]
+
+    scene = @store.getState().scene
+    expect (Scene.getAllTimelines scene).length
+      .toBe 1
+
+  #   timeline = _.head Scene.getAllTimelines scene
+  #   expect Scene.getTimelineById scene, timeline.id
+  #     .toBe timeline
+  #   expect timeline['class']
+  #     .toBe 'PathTimeline'
+
+  # # Attach a timeline to an entity.
+  # #   timeline: String
+  # #   entity: String
+  # 'AttachTimeline'
+
+  # # Detach a timeline from an entity.
+  # #   timeline: String
+  # #   entity: String
+  # 'DetachTimeline'
+
+  # # Set how the specified timeline will be controlled.
+  # #
+  # #   timeline: String
+  # #   playbackMethod: 'time' | 'touchX' | 'touchY' | etc
+  # 'SetTimelinePlaybackMethod'
 
 
   # TODO: this has a bunch of new specs about registering kits

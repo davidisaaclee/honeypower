@@ -3418,7 +3418,7 @@ var editorActions, entityActions, registerAction, sceneActions;
 
 editorActions = ['StampPrototype', 'RemoveEntity', 'TransformEntity', 'LinkEntities', 'RequestEntityEditor', 'RegisterTimeline', 'AttachTimeline', 'DetachTimeline', 'SetTimelinePlaybackMethod'];
 
-sceneActions = [];
+sceneActions = ['DeltaTime'];
 
 entityActions = ['AddChild', 'RemoveChild', 'TransformEntity'];
 
@@ -3526,7 +3526,7 @@ EntityTimelineRelation ::=
 module.exports = require('./reducers/SceneReducer');
 
 
-},{"./reducers/SceneReducer":98}],92:[function(require,module,exports){
+},{"./reducers/SceneReducer":97}],92:[function(require,module,exports){
 
 /*
 `Model`s are minimal classes wrapping immutable data objects. They should
@@ -3576,13 +3576,24 @@ Scene = (function(superClass) {
     return Scene.__super__.constructor.apply(this, arguments);
   }
 
-  Scene.make = function(entities) {
+  Scene.make = function(entities, timelines) {
     return _.assign(new Scene(), {
-      entities: entities
+      entities: entities,
+      timelines: timelines
     });
   };
 
-  Scene.empty = Object.freeze(Scene.make(Set.withHashProperty('id')));
+  Scene["with"] = function(entitiesArray, timelineArray) {
+    if (entitiesArray == null) {
+      entitiesArray = [];
+    }
+    if (timelineArray == null) {
+      timelineArray = [];
+    }
+    return Scene.make(entitiesArray.reduce(Set.put, Set.withHashProperty('id')), timelineArray.reduce(Set.put, Set.withHashProperty('id')));
+  };
+
+  Scene.empty = Object.freeze(Scene.make(Set.withHashProperty('id'), Set.withHashProperty('id')));
 
   Scene.getEntity = function(scene, entityId) {
     return Set.get(scene.entities, entityId);
@@ -3602,6 +3613,14 @@ Scene = (function(superClass) {
 
   Scene.getAllEntities = function(scene) {
     return Set.asArray(scene.entities);
+  };
+
+  Scene.getTimelineById = function(scene, timelineId) {
+    return Set.get(scene.timelines, timelineId);
+  };
+
+  Scene.getAllTimelines = function(scene) {
+    return Set.asArray(scene.timelines);
   };
 
   Scene.addEntity = function(scene, entity) {
@@ -3659,6 +3678,38 @@ Scene = (function(superClass) {
     }
   };
 
+  Scene.addTimeline = function(scene, timeline) {
+    return _.assign({}, scene, {
+      timelines: Set.put(scene.timelines, timeline)
+    });
+  };
+
+  Scene.removeTimelineById = function(scene, timelineId) {
+    var toRemove;
+    toRemove = Set.get(scene.timelines, timelineId);
+    return _.assign({}, scene, {
+      timelines: Set.remove(scene.timelines, toRemove)
+    });
+  };
+
+  Scene.attachEntityToTimeline = function(scene, entityId, timelineId, initialProgress) {
+    if (initialProgress == null) {
+      initialProgress = 0;
+    }
+  };
+
+  Scene.mutateTimeline = function(scene, timelineId, proc) {
+    var timeline;
+    timeline = Scene.getTimelineById(scene, timelineId);
+    if (timeline != null) {
+      return _.assign({}, scene, {
+        timelines: Set.put(scene.timelines, proc(timeline))
+      });
+    } else {
+      return scene;
+    }
+  };
+
   return Scene;
 
 })(Model);
@@ -3666,7 +3717,7 @@ Scene = (function(superClass) {
 module.exports = Scene;
 
 
-},{"../util/Set":99,"./Model":92,"./entities/Entity":94,"lodash":"lodash","updeep":77}],94:[function(require,module,exports){
+},{"../util/Set":98,"./Model":92,"./entities/Entity":94,"lodash":"lodash","updeep":77}],94:[function(require,module,exports){
 var Entity, Model, Transform, _,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -3897,7 +3948,7 @@ Transform = (function(superClass) {
 module.exports = Transform;
 
 
-},{"../../util/wrap":103,"../Model":92,"./Vector2":96,"lodash":"lodash"}],96:[function(require,module,exports){
+},{"../../util/wrap":102,"../Model":92,"./Vector2":96,"lodash":"lodash"}],96:[function(require,module,exports){
 var Model, Vector2, _,
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -3959,43 +4010,7 @@ module.exports = Vector2;
 
 
 },{"../Model":92,"lodash":"lodash"}],97:[function(require,module,exports){
-var Entity, Set, _, addChildReducers, defaultState, k, mapAssign, reducer, updeep;
-
-_ = require('lodash');
-
-updeep = require('updeep');
-
-k = require('../ActionTypes');
-
-mapAssign = require('../util/mapAssign');
-
-addChildReducers = require('../util/addChildReducers');
-
-Entity = require('../model/entities/Entity');
-
-Set = require('../util/Set');
-
-defaultState = Set.withHashFunction(function(entity) {
-  return entity.id;
-});
-
-
-/*
-Reducer for all actions contained within entities.
- */
-
-reducer = function(state, action) {
-  if (state == null) {
-    state = defaultState;
-  }
-  return state;
-};
-
-module.exports = reducer;
-
-
-},{"../ActionTypes":90,"../model/entities/Entity":94,"../util/Set":99,"../util/addChildReducers":100,"../util/mapAssign":102,"lodash":"lodash","updeep":77}],98:[function(require,module,exports){
-var Entity, Scene, Set, _, addChildReducers, clamp, entitiesReducer, k, mapAssign, reducer, updeep, wrap;
+var Entity, Scene, Set, _, addChildReducers, clamp, k, mapAssign, reducer, updeep, wrap;
 
 _ = require('lodash');
 
@@ -4017,8 +4032,6 @@ clamp = require('../util/clamp');
 
 wrap = require('../util/wrap');
 
-entitiesReducer = require('./EntityReducer');
-
 reducer = function(state, action) {
   if (state == null) {
     state = Scene.empty;
@@ -4026,12 +4039,10 @@ reducer = function(state, action) {
   return state;
 };
 
-module.exports = addChildReducers(reducer, {
-  'entities': entitiesReducer
-});
+module.exports = reducer;
 
 
-},{"../ActionTypes":90,"../model/Scene":93,"../model/entities/Entity":94,"../util/Set":99,"../util/addChildReducers":100,"../util/clamp":101,"../util/mapAssign":102,"../util/wrap":103,"./EntityReducer":97,"lodash":"lodash","updeep":77}],99:[function(require,module,exports){
+},{"../ActionTypes":90,"../model/Scene":93,"../model/entities/Entity":94,"../util/Set":98,"../util/addChildReducers":99,"../util/clamp":100,"../util/mapAssign":101,"../util/wrap":102,"lodash":"lodash","updeep":77}],98:[function(require,module,exports){
 var Set, _;
 
 _ = require('lodash');
@@ -4119,7 +4130,7 @@ Set = (function() {
 module.exports = Set;
 
 
-},{"lodash":"lodash"}],100:[function(require,module,exports){
+},{"lodash":"lodash"}],99:[function(require,module,exports){
 var _, addChildReducers;
 
 _ = require('lodash');
@@ -4147,7 +4158,7 @@ module.exports = addChildReducers = function(baseReducer, childReducers) {
 };
 
 
-},{"lodash":"lodash"}],101:[function(require,module,exports){
+},{"lodash":"lodash"}],100:[function(require,module,exports){
 var clamp;
 
 module.exports = clamp = function(low, high, n) {
@@ -4163,7 +4174,7 @@ module.exports = clamp = function(low, high, n) {
 };
 
 
-},{}],102:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 
 /*
 Utility for mapping `Object.assign()` over arrays and objects.
@@ -4292,7 +4303,7 @@ module.exports = mapAssign = function(obj, pathString, makeValue) {
 };
 
 
-},{}],103:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 var wrap;
 
 module.exports = wrap = function(low, high, n) {

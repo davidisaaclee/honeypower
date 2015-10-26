@@ -7,6 +7,7 @@ addChildReducers = require '../util/addChildReducers'
 
 Scene = require '../model/Scene'
 Editor = require '../model/Editor'
+Timeline = require '../model/timelines/Timeline'
 Entity = require '../model/entities/Entity'
 Transform = require '../model/graphics/Transform'
 Set = require '../util/Set'
@@ -21,17 +22,10 @@ Reducer for all actions contained within entities.
 ###
 reducer = (state = defaultState, action) ->
   switch action.type
-    # when k.AddEntity
-    #   {name, transform, children} = action.data
-
-    #   newEntity = Entity.make name, transform, children
-    #   _.assign {}, state,
-    #     scene: Scene.addEntity state.scene, newEntity
-
-
     when k.RemoveEntity
       {entity} = action.data
-      _.assign {}, state, scene: (Scene.removeEntity state.scene, entity)
+      _.assign {}, state,
+        scene: Scene.removeEntity state.scene, entity
 
 
     when k.StampPrototype
@@ -63,18 +57,16 @@ reducer = (state = defaultState, action) ->
 
     when k.LinkEntities
       {parent, child} = action.data
-      r = _.assign {}, state,
+      _.assign {}, state,
         scene: Scene.linkEntitiesById state.scene, parent, child
 
-      # if parentObj? and childObj?
-      #   # remove from base level?
-      #   newScene = Scene.removeEntity state.scene, childObj.id
-      #   newScene = Scene.mutateEntity state.scene, parent, (e) ->
-      #     Entity.setChild e, childObj
-      #   _.assign {}, state,
-      #     scene: newScene
-      # else state
-
+    when k.RegisterTimeline
+      # {class, data} = action.data
+      timeline = Timeline.make \
+        action.data.class,
+        action.data.data
+      _.assign {}, state,
+        scene: Scene.addTimeline state.scene, timeline
 
     else state
 
