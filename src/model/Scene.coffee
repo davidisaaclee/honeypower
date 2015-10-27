@@ -1,5 +1,7 @@
 _ = require 'lodash'
 u = require 'updeep'
+{createStore} = require 'redux'
+darko = require 'darko'
 Model = require './Model'
 Entity = require './entities/Entity'
 Set = require '../util/Set'
@@ -16,6 +18,7 @@ class Scene extends Model
     _.assign (new Scene()),
       entities: entities
       timelines: timelines
+      darko: null
 
   @with: (entitiesArray = [], timelineArray = []) ->
     Scene.make \

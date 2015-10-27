@@ -14,4 +14,4 @@ Machine ::=
 ###
 
 class Machine extends Entity
-  @make: 
+  @make: null

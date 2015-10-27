@@ -18,7 +18,7 @@ Editor ::=
 ###
 
 class Editor extends Model
-  @make: (scene, kits = []) ->
+  @make: (scene = Scene.empty, kits = []) ->
     kitSet = kits.reduce Set.put, Set.withHashProperty 'name'
 
     _.assign (new Editor()),

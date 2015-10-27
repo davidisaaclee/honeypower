@@ -1,5 +1,7 @@
 _ = require 'lodash'
 
+Set = require '../../util/Set'
+
 Model = require '../Model'
 Transform = require '../graphics/Transform'
 
@@ -39,6 +41,8 @@ class Entity extends Model
 
   @getScale: (entity) -> Transform.getScale entity.transform
 
+  @getAllAttachedTimelines: (entity) -> Set.asArray entity.attachedTimelines
+
 
   # Mutation
 
@@ -48,17 +52,20 @@ class Entity extends Model
     _.assign {}, entity,
       child: child
 
-  # @removeChild: (entity, childId) ->
-  #   idx = _.findIndex (Entity.getChildren entity), (child) -> child.id is childId
-  #   if idx isnt -1
-  #   then _.assign {}, entity,
-  #       children: [ (entity.children.splice 0, idx)...,
-  #                   (entity.children.splice (idx + 1))... ]
-  #   else entity
-
   @removeChild: (entity) ->
     _.assign {}, entity,
       child: null
+
+  @addTimeline: (entity, timelineId, progress = 0) ->
+    newAttachedTimelines = Set.put entity.attachedTimelines,
+      timeline: timelineId
+      progress: progress
+    _.assign {}, entity,
+      attachedTimelines: newAttachedTimelines
+
+  @removeTimeline: (entity, timelineId) ->
+    _.assign {}, entity,
+      attachedTimelines: Set.removeByHash entity.attachedTimelines, timelineId
 
   @transform: (entity, {translate, rotate, scale}) ->
     if translate?

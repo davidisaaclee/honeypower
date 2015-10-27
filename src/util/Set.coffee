@@ -51,8 +51,9 @@ class Set
       _elements: _.assign {}, set._elements, delta
 
   @remove: (set, element) ->
-    hash = set._hash element
+    Set.removeByHash set, set._hash element
 
+  @removeByHash: (set, hash) ->
     _.assign {}, set,
       _elements: _.omit set._elements, hash
 

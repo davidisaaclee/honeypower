@@ -16,7 +16,6 @@ sceneReducer = require './SceneReducer'
 
 defaultState = Editor.empty
 
-
 ###
 Reducer for all actions contained within entities.
 ###

@@ -1,6 +1,8 @@
 _ = require 'lodash'
+# {combineReducers} = require 'redux'
 
 module.exports = addChildReducers = (baseReducer, childReducers = {}) ->
+  # combined = combineReducers childReducers
   (state = {}, action) ->
     # `acc` will hold our state as it gets updated by each reducer
     # `key` is the key of the reducer, as well as the substate's path
