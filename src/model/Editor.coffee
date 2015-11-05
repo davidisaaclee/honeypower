@@ -32,6 +32,8 @@ class Editor extends Model
 
   # Access
 
+  @getScene: (editor) -> editor.scene
+
   @getPrototype: (editor, protoKey) ->
     results = Set.asArray editor.kits
       .map (kit) -> Kit.getPrototype kit, protoKey
@@ -51,14 +53,22 @@ class Editor extends Model
   #
   #   editor [Editor] - invoking `Editor`
   #   protoKey [String] - the `Prototype`'s registered key
+  #   transform [Transform]
   #   [name [String]] - a name for the new stamped `Entity`
-  @stampPrototype: (editor, protoKey, name) ->
+  #   [id [String]] - a user-defined id for the new `Entity`
+  @stampPrototype: (editor, protoKey, transform, name, id) ->
     proto = Editor.getPrototype editor, protoKey
     # _.assign {}, (_.omit proto, 'protoKey')
-    Prototype.stamp proto, name
+    Prototype.stamp proto, transform, name, id
 
 
   # Mutation
+
+  @setScene: (editor, scene) ->
+    _.assign {}, editor, scene: scene
+
+  @mutateScene: (editor, mutator) ->
+    Editor.setScene editor, mutator Editor.getScene editor
 
   @addPrototype: (editor, protoKey, entity) ->
     entity.protoKey = protoKey

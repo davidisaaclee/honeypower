@@ -38,7 +38,7 @@ describe 'Scene', () ->
     timeline = (Scene.getAllTimelines prefilledScene)[0]
     prefilledScene = Scene.mutateTimeline prefilledScene, timeline.id, (tmln) ->
       Timeline.setUpdateMethod tmln, Timeline.UpdateMethod.Time
-    scene = Scene.attachEntityToTimeline scene, kiddoEntity.id, timeline.id, 0
+    prefilledScene = Scene.attachEntityToTimeline prefilledScene, kiddoEntity.id, timeline.id, 0
 
     @prefilled = createStore sceneReducer, prefilledScene
 

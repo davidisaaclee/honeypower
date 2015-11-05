@@ -6,8 +6,10 @@ editorActions = [
   #   proto: String
   #   transform: Transform
   #   name: String
+  #   # optional user-defined id
+  #   [id: String]
+  #   # set to null or undefined for placing directly into scene
   #   [onto: String | null]
-  #     set to null or undefined for placing directly into scene
   'StampPrototype'
 
   # Removes (deletes) an entity from the scene.
@@ -40,25 +42,22 @@ editorActions = [
   # TODO: still need to test all timeline actions
   # Timelines
 
-  # # Registers a new Darko timeline, optionally attaching it to an `Entity`.
-  # #
-  # #   mapping: (data, progress) -> data
-  # #   [entity: String]
-  # 'RegisterTimeline'
-
-  # Registers a new Darko timeline.
+  # Registers a new timeline.
   #
-  #   class: String     # class of this timeline
+  #   [id: String]      # optional user-defined id
+  #   type: String     # class of this timeline
   #   data: Object      # data specific to the timeline class
   'RegisterTimeline'
 
   # Attach a timeline to an entity.
   #   timeline: String
   #   entity: String
+  #   [progress: Float]     # initial progress; defaults to 0
+  #   [stackPosition: Int]  # position in timeline stack; defaults to 0 (top)
   'AttachTimeline'
 
   # Detach a timeline from an entity.
-  #   timeline: String
+  #   timelineIndex: Int     # the index of the timeline in the entity's timeline stack
   #   entity: String
   'DetachTimeline'
 

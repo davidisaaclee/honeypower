@@ -23,49 +23,73 @@ reducer = (state = defaultState, action) ->
   switch action.type
     when k.RemoveEntity
       {entity} = action.data
-      _.assign {}, state,
-        scene: Scene.removeEntity state.scene, entity
+      Editor.mutateScene state, (scene) ->
+        Scene.removeEntity scene, entity
 
 
     when k.StampPrototype
-      {proto, onto, name, transform} = action.data
+      {id, proto, onto, name, transform} = action.data
 
-      stamp = Editor.stampPrototype state, proto
-      stamp = _.assign stamp,
-        transform: transform
-        name: name
 
-      newScene = Scene.addEntity state.scene, stamp
+      Editor.mutateScene state, (scene) ->
+        stamp = Editor.stampPrototype state, proto, transform, name, id
+        newScene = Scene.addEntity scene, stamp
 
-      if onto?
-        parentObj = Scene.getEntity state.scene, onto
-        newScene = Scene.linkEntitiesById newScene, parentObj.id, stamp.id
+        if onto?
+          parentObj = Scene.getEntity scene, onto
+          newScene = Scene.linkEntitiesById newScene, parentObj.id, stamp.id
 
-      _.assign {}, state,
-        scene: newScene
+        return newScene
 
 
     when k.TransformEntity
       {entity, transform} = action.data
 
-      _.assign {}, state,
-        scene: Scene.mutateEntity state.scene, entity, (e) ->
-          _.assign {}, e,
-            transform: Transform.applyTransform e.transform, transform
+
+      Editor.mutateScene state, (scene) ->
+        Scene.mutateEntity scene, entity, (e) ->
+          Scene.Entities.mutateLocalData scene, e, (data) ->
+            _.assign {}, data,
+              transform:
+                Transform.applyTransform data.transform, transform
 
 
     when k.LinkEntities
       {parent, child} = action.data
-      _.assign {}, state,
-        scene: Scene.linkEntitiesById state.scene, parent, child
+      Editor.mutateScene state, (scene) ->
+        Scene.linkEntitiesById scene, parent, child
+
 
     when k.RegisterTimeline
-      # {class, data} = action.data
-      timeline = Timeline.make \
-        action.data.class,
-        action.data.data
-      _.assign {}, state,
-        scene: Scene.addTimeline state.scene, timeline
+      {id, type, data} = action.data
+      timeline = Timeline.make type, data, id
+      Editor.mutateScene state, (scene) ->
+        Scene.addTimeline scene, timeline
+
+
+    # Attach a timeline to an entity.
+    #   timeline: String
+    #   entity: String
+    #   [progress: Float]     # initial progress; defaults to 0
+    #   [stackPosition: Int]  # position in timeline stack; defaults to 0 (top)
+    when k.AttachTimeline
+      {timeline, entity, progress, stackPosition} = _.defaults action.data,
+        progress: 0
+        stackPosition: 0
+
+      Editor.mutateScene state, (scene) ->
+        Scene.attachEntityToTimeline scene,
+          entity, timeline, progress, stackPosition
+
+
+    # Detach a timeline from an entity.
+    #   timelineIndex: Int     # the index of the timeline in the entity's timeline stack
+    #   entity: String
+    when k.DetachTimeline
+      {timelineIndex, entity} = action.data
+
+      Editor.mutateScene state, (scene) ->
+        Scene.detachEntityFromTimelineAtIndex scene, entity, timelineIndex
 
     else state
 

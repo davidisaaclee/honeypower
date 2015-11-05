@@ -34,49 +34,62 @@
    */
 
   reducer = function(state, action) {
-    var child, entity, name, newScene, onto, parent, parentObj, proto, ref, ref1, ref2, stamp, timeline, transform;
+    var child, data, entity, id, name, onto, parent, progress, proto, ref, ref1, ref2, ref3, ref4, ref5, stackPosition, timeline, timelineIndex, transform, type;
     if (state == null) {
       state = defaultState;
     }
     switch (action.type) {
       case k.RemoveEntity:
         entity = action.data.entity;
-        return _.assign({}, state, {
-          scene: Scene.removeEntity(state.scene, entity)
+        return Editor.mutateScene(state, function(scene) {
+          return Scene.removeEntity(scene, entity);
         });
       case k.StampPrototype:
-        ref = action.data, proto = ref.proto, onto = ref.onto, name = ref.name, transform = ref.transform;
-        stamp = Editor.stampPrototype(state, proto);
-        stamp = _.assign(stamp, {
-          transform: transform,
-          name: name
-        });
-        newScene = Scene.addEntity(state.scene, stamp);
-        if (onto != null) {
-          parentObj = Scene.getEntity(state.scene, onto);
-          newScene = Scene.linkEntitiesById(newScene, parentObj.id, stamp.id);
-        }
-        return _.assign({}, state, {
-          scene: newScene
+        ref = action.data, id = ref.id, proto = ref.proto, onto = ref.onto, name = ref.name, transform = ref.transform;
+        return Editor.mutateScene(state, function(scene) {
+          var newScene, parentObj, stamp;
+          stamp = Editor.stampPrototype(state, proto, transform, name, id);
+          newScene = Scene.addEntity(scene, stamp);
+          if (onto != null) {
+            parentObj = Scene.getEntity(scene, onto);
+            newScene = Scene.linkEntitiesById(newScene, parentObj.id, stamp.id);
+          }
+          return newScene;
         });
       case k.TransformEntity:
         ref1 = action.data, entity = ref1.entity, transform = ref1.transform;
-        return _.assign({}, state, {
-          scene: Scene.mutateEntity(state.scene, entity, function(e) {
-            return _.assign({}, e, {
-              transform: Transform.applyTransform(e.transform, transform)
+        return Editor.mutateScene(state, function(scene) {
+          return Scene.mutateEntity(scene, entity, function(e) {
+            return Scene.Entities.mutateLocalData(scene, e, function(data) {
+              return _.assign({}, data, {
+                transform: Transform.applyTransform(data.transform, transform)
+              });
             });
-          })
+          });
         });
       case k.LinkEntities:
         ref2 = action.data, parent = ref2.parent, child = ref2.child;
-        return _.assign({}, state, {
-          scene: Scene.linkEntitiesById(state.scene, parent, child)
+        return Editor.mutateScene(state, function(scene) {
+          return Scene.linkEntitiesById(scene, parent, child);
         });
       case k.RegisterTimeline:
-        timeline = Timeline.make(action.data["class"], action.data.data);
-        return _.assign({}, state, {
-          scene: Scene.addTimeline(state.scene, timeline)
+        ref3 = action.data, id = ref3.id, type = ref3.type, data = ref3.data;
+        timeline = Timeline.make(type, data, id);
+        return Editor.mutateScene(state, function(scene) {
+          return Scene.addTimeline(scene, timeline);
+        });
+      case k.AttachTimeline:
+        ref4 = _.defaults(action.data, {
+          progress: 0,
+          stackPosition: 0
+        }), timeline = ref4.timeline, entity = ref4.entity, progress = ref4.progress, stackPosition = ref4.stackPosition;
+        return Editor.mutateScene(state, function(scene) {
+          return Scene.attachEntityToTimeline(scene, entity, timeline, progress, stackPosition);
+        });
+      case k.DetachTimeline:
+        ref5 = action.data, timelineIndex = ref5.timelineIndex, entity = ref5.entity;
+        return Editor.mutateScene(state, function(scene) {
+          return Scene.detachEntityFromTimelineAtIndex(scene, entity, timelineIndex);
         });
       default:
         return state;

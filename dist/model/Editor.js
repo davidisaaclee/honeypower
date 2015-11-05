@@ -59,6 +59,10 @@
       return Editor.make(Scene.empty, kits);
     };
 
+    Editor.getScene = function(editor) {
+      return editor.scene;
+    };
+
     Editor.getPrototype = function(editor, protoKey) {
       var results;
       results = Set.asArray(editor.kits).map(function(kit) {
@@ -77,10 +81,20 @@
       }
     };
 
-    Editor.stampPrototype = function(editor, protoKey, name) {
+    Editor.stampPrototype = function(editor, protoKey, transform, name, id) {
       var proto;
       proto = Editor.getPrototype(editor, protoKey);
-      return Prototype.stamp(proto, name);
+      return Prototype.stamp(proto, transform, name, id);
+    };
+
+    Editor.setScene = function(editor, scene) {
+      return _.assign({}, editor, {
+        scene: scene
+      });
+    };
+
+    Editor.mutateScene = function(editor, mutator) {
+      return Editor.setScene(editor, mutator(Editor.getScene(editor)));
     };
 
     Editor.addPrototype = function(editor, protoKey, entity) {

@@ -19,11 +19,13 @@ class Prototype extends Model
   #
   #   proto [Prototype] - the invoking `Prototype`
   #   name [String] - the name of the to-be-created copy
-  @stamp: (proto, name) ->
+  #   [id [String]] - optional user-defined id
+  @stamp: (proto, transform, name, id) ->
     Entity.make name,
-      proto.entity.transform,
+      transform,
       proto.entity.children,
-      proto
+      # proto,      # is it worthwhile to pass around the prototype?
+      id
 
 
   # Access

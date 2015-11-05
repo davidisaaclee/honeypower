@@ -1,7 +1,6 @@
 _ = require 'lodash'
 u = require 'updeep'
 {createStore} = require 'redux'
-darko = require 'darko'
 Model = require './Model'
 Entity = require './entities/Entity'
 Set = require '../util/Set'
@@ -18,7 +17,6 @@ class Scene extends Model
     _.assign (new Scene()),
       entities: entities
       timelines: timelines
-      darko: null
 
   @with: (entitiesArray = [], timelineArray = []) ->
     Scene.make \
@@ -47,9 +45,10 @@ class Scene extends Model
   @getAllEntities: (scene) ->
     Set.asArray scene.entities
 
-
   @getTimelineById: (scene, timelineId) ->
     Set.get scene.timelines, timelineId
+
+  @getTimeline: @getTimelineById
 
   @getAllTimelines: (scene) ->
     Set.asArray scene.timelines
@@ -121,8 +120,25 @@ class Scene extends Model
       timelines: Set.remove scene.timelines, toRemove
 
 
-  @attachEntityToTimeline: (scene, entityId, timelineId, initialProgress = 0) ->
-    # TODO
+  @attachEntityToTimeline: (scene, entityId, timelineId, progress = 0, stackPosition = 0) ->
+    entity = Scene.getEntity scene, entityId
+    timeline = Scene.getTimeline scene, timelineId
+
+    if entity? and timeline?
+      Scene.mutateEntity scene, entityId, (e) ->
+        Entity.insertTimeline e, timelineId, progress, stackPosition
+    else scene
+
+
+  @detachEntityFromTimelineAtIndex: (scene, entityId, timelineIdx) ->
+    Scene.mutateEntity scene, entityId, (e) ->
+      Entity.removeTimeline e, timelineIdx
+
+
+  # FIXME
+  @updateEntityData: (scene, entityId) ->
+    Scene.mutateEntity scene, entityId, (entity) ->
+      Scene.Entities.computeEntityData scene, entity
 
 
   @mutateTimeline: (scene, timelineId, proc) ->
@@ -130,6 +146,45 @@ class Scene extends Model
     if timeline?
     then _.assign {}, scene, timelines: (Set.put scene.timelines, proc timeline)
     else scene
+
+
+
+  ###
+  Entity methods
+
+  These functions operate on and return entities, but necessitate knowledge of
+    the scene. They are thus all "semi-curried" - given a single argument, the
+    scene context, they each produce a function which awaits the rest of the
+    arguments, and operates over the provided scene as context.
+  (Implied with this is that these functions do not mutate anything outside of
+    the specified entity.)
+
+  fn(scene, a, b, c) == fn(scene)(a, b, c)
+  ###
+
+  @Entities:
+    computeEntityData: (scene, entity) ->
+      ctx = (ent) ->
+        Entity.setComputedData ent,
+          Entity.getTimelineStack ent
+            .map (timelineId) ->
+              timeline = Scene.getTimeline scene, timelineId
+              progress = Entity.getProgressForTimeline entity, timelineId
+              return (d) -> Timelines.mapping timeline, progress, d
+            .reduce ((data, mutator) -> mutator data), (Entity.getLocalData ent)
+
+      if arguments.length is 1
+      then ctx
+      else ctx.apply null, _.tail arguments
+
+    mutateLocalData: (scene, entity, mutator) ->
+      ctx = (ent, mutator) ->
+        ent = Entity.setLocalData ent, (mutator Entity.getLocalData ent)
+        ent = Scene.Entities.computeEntityData scene, ent
+
+      if arguments.length is 1
+      then ctx
+      else ctx.apply null, _.tail arguments
 
 
 module.exports = Scene

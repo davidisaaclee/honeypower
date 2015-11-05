@@ -1,4 +1,5 @@
 _ = require 'lodash'
+Immutable = require 'immutable'
 
 Set = require '../../util/Set'
 
@@ -19,12 +20,29 @@ class Entity extends Model
     _spawnCount = 0
     _nextId = () -> "entity-#{_spawnCount++}"
 
-    return (name = null, transform = Transform.default, child = null, proto) ->
-      _.assign (new Entity()),
-        id: _nextId()
+    return (name, transform, child, id) ->
+      config =
         name: name
-        transform: transform
         child: child
+        id: id
+
+      initialData = _.defaults {},
+        {transform: transform},
+        {transform: Transform.default}
+
+      fields = _.defaults config,
+        id: _nextId()
+        child: null
+        name: null
+        timelines: Immutable.List()
+        timelinesData: Immutable.Map()
+        localData: initialData
+        computedData: initialData
+
+
+      r = _.assign new Entity(), fields
+
+      return r
 
 
   # Access
@@ -35,13 +53,22 @@ class Entity extends Model
 
   @getChild: (entity) -> entity.child
 
-  @getPosition: (entity) -> Transform.getPosition entity.transform
+  @getLocalData: (entity) -> entity.localData
 
-  @getRotation: (entity) -> Transform.getRotation entity.transform
+  @getComputedData: (entity) -> entity.computedData
 
-  @getScale: (entity) -> Transform.getScale entity.transform
+  @getTransform: (entity) -> (Entity.getComputedData entity).transform
 
-  @getAllAttachedTimelines: (entity) -> Set.asArray entity.attachedTimelines
+  @getPosition: (entity) -> Transform.getPosition Entity.getTransform entity
+
+  @getRotation: (entity) -> Transform.getRotation Entity.getTransform entity
+
+  @getScale: (entity) -> Transform.getScale Entity.getTransform entity
+
+  @getTimelineStack: (entity) -> entity.timelines.toArray()
+
+  @getProgressForTimeline: (entity, timelineId) ->
+    entity.timelinesData.get timelineId
 
 
   # Mutation
@@ -56,16 +83,31 @@ class Entity extends Model
     _.assign {}, entity,
       child: null
 
-  @addTimeline: (entity, timelineId, progress = 0) ->
-    newAttachedTimelines = Set.put entity.attachedTimelines,
-      timeline: timelineId
-      progress: progress
+  @setLocalData: (entity, localData) ->
     _.assign {}, entity,
-      attachedTimelines: newAttachedTimelines
+      localData: localData
 
-  @removeTimeline: (entity, timelineId) ->
+  @setComputedData: (entity, computedData) ->
     _.assign {}, entity,
-      attachedTimelines: Set.removeByHash entity.attachedTimelines, timelineId
+      computedData: computedData
+
+  @insertTimeline: (entity, timelineId, progress = 0, stackPosition = 0) ->
+    _.assign {}, entity,
+      timelines: entity.timelines.splice stackPosition, 0, timelineId
+      timelinesData: entity.timelinesData.set timelineId, progress
+
+  @removeTimeline: (entity, timelineIdx) ->
+    timelineId = entity.timelines.get timelineIdx
+    if timelineId?
+      _.assign {}, entity,
+        timelines: entity.timelines.delete timelineIdx
+        timelinesData: entity.timelinesData.delete timelineId
+    else entity
+
+  @setTransform: (entity, transform) ->
+    newLocaldata = _.assign (Entity.getLocalData entity),
+      transform: transform
+    Entity.setLocalData entity, newLocaldata
 
   @transform: (entity, {translate, rotate, scale}) ->
     if translate?
@@ -77,14 +119,14 @@ class Entity extends Model
 
   @translate: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.translate entity.transform, amount
+      transform: Transform.translate (Entity.getTransform entity), amount
 
   @rotate: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.rotate entity.transform, amount
+      transform: Transform.rotate (Entity.getTransform entity), amount
 
   @scale: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.scale entity.transform, amount
+      transform: Transform.scale (Entity.getTransform entity), amount
 
 module.exports = Entity

@@ -31,7 +31,7 @@
     "watchify": "^3.4.0"
   },
   "dependencies": {
-    "darko": "git://github.com/davidisaaclee/darko",
+    "immutable": "^3.7.5",
     "lodash": "^3.10.1",
     "redux": "^3.0.2",
     "updeep": "^0.10.1"

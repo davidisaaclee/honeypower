@@ -1,3 +1,4 @@
+_ = require 'lodash'
 {createStore} = require 'redux'
 k = require '../src/ActionTypes'
 editorReducer = require '../src/reducers/EditorReducer'
@@ -5,12 +6,13 @@ Scene = require '../src/model/Scene'
 Editor = require '../src/model/Editor'
 Kit = require '../src/model/Kit'
 Prototype = require '../src/model/Prototype'
+Timeline = require '../src/model/timelines/Timeline'
 Entity = require '../src/model/entities/Entity'
 Vector2 = require '../src/model/graphics/Vector2'
 Path = require '../src/model/graphics/Path'
 Transform = require '../src/model/graphics/Transform'
 
-describe 'Editor actions:', () ->
+describe 'Editor:', () ->
   beforeEach () ->
     birdo = Entity.make 'birdoProto'
     kiddo = Entity.make 'kiddoProto'
@@ -68,6 +70,17 @@ describe 'Editor actions:', () ->
     birdoProto = Editor.getPrototype @store.getState(), 'birdo'
     expect Entity.getPosition (Prototype.getDefinition birdoProto)
       .toEqual (Vector2.make 0, 0)
+
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        id: 'myBirdo'
+        proto: 'birdo'
+
+    expect (Scene.getAllEntities @store.getState().scene).length
+      .toBe 2
+    expect (Scene.getEntity @store.getState().scene, 'myBirdo')
+      .toBeDefined()
 
 
   # Removes (deletes) an entity from the scene.
@@ -302,15 +315,15 @@ describe 'Editor actions:', () ->
       .toBeNull()
 
 
-  # Registers a new Darko timeline.
+  # Registers a new timeline.
   #
-  #   class: String     # class of this timeline
-  #   data: Object      # data specific to the timeline class
+  #   type: String     # type of this timeline
+  #   data: Object      # data specific to the timeline type
   it 'RegisterTimeline', () ->
     @store.dispatch
       type: k.RegisterTimeline
       data:
-        class: 'PathTimeline'
+        type: 'PathTimeline'
         data:
           path: Path.make (Vector2.make 0, 0), [
             Vector2.make 0, 0
@@ -321,27 +334,210 @@ describe 'Editor actions:', () ->
     expect (Scene.getAllTimelines scene).length
       .toBe 1
 
-  #   timeline = _.head Scene.getAllTimelines scene
-  #   expect Scene.getTimelineById scene, timeline.id
-  #     .toBe timeline
-  #   expect timeline['class']
-  #     .toBe 'PathTimeline'
+    timeline = _.head Scene.getAllTimelines scene
+    expect Scene.getTimelineById scene, timeline.id
+      .toBe timeline
+    expect timeline['type']
+      .toBe 'PathTimeline'
 
-  # # Attach a timeline to an entity.
-  # #   timeline: String
-  # #   entity: String
-  # 'AttachTimeline'
+    @store.dispatch
+      type: k.RegisterTimeline
+      data:
+        id: 'myTimeline'
+        type: 'MockTimeline'
+        data:
+          path: Path.make (Vector2.make 0, 0), [
+            Vector2.make 0, 0
+            Vector2.make 1, 0
+          ]
 
-  # # Detach a timeline from an entity.
-  # #   timeline: String
-  # #   entity: String
-  # 'DetachTimeline'
+    scene = @store.getState().scene
+    expect (Scene.getAllTimelines scene).length
+      .toBe 2
+    expect Scene.getTimelineById scene, 'myTimeline'
+      .toBeDefined()
+    expect Timeline.getType (Scene.getTimelineById scene, 'myTimeline')
+      .toEqual 'MockTimeline'
 
-  # # Set how the specified timeline will be controlled.
-  # #
-  # #   timeline: String
-  # #   playbackMethod: 'time' | 'touchX' | 'touchY' | etc
-  # 'SetTimelinePlaybackMethod'
+
+  # Attach a timeline to an entity.
+  #   timeline: String
+  #   entity: String
+  #   [progress: Float]     # initial progress; defaults to 0
+  #   [stackPosition: Int]  # position in timeline stack; defaults to 0 (top)
+  it 'AttachTimeline', () ->
+    @store.dispatch
+      type: k.RegisterTimeline
+      data:
+        id: 'timeline1'
+        class: 'PathTimeline'
+        data:
+          path: Path.make (Vector2.make 0, 0), [
+            Vector2.make 0, 0
+            Vector2.make 1, 0
+          ]
+    @store.dispatch
+      type: k.RegisterTimeline
+      data:
+        id: 'timeline2'
+        class: 'PathTimeline'
+        data:
+          path: Path.make (Vector2.make 0, 0), [
+            Vector2.make 0, 0
+            Vector2.make 1, 0
+          ]
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        id: 'b'
+        proto: 'birdo'
+        name: 'birdoStamp'
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        id: 'k'
+        proto: 'kiddo'
+        name: 'kiddoStamp'
+
+    scene = @store.getState().scene
+    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+      .toEqual []
+    expect Entity.getTimelineStack Scene.getEntity scene, 'k'
+      .toEqual []
+
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline1'
+        entity: 'b'
+
+    scene = @store.getState().scene
+    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+      .toEqual ['timeline1']
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+      .toBe 0
+
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline2'
+        entity: 'b'
+        progress: 0.2
+
+    scene = @store.getState().scene
+    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+      .toEqual ['timeline2', 'timeline1']
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+      .toBe 0
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline2'
+      .toBe 0.2
+
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline1'
+        entity: 'k'
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline2'
+        entity: 'k'
+        stackPosition: 1
+        progress: 0.5
+
+    scene = @store.getState().scene
+    expect Entity.getTimelineStack Scene.getEntity scene, 'k'
+      .toEqual ['timeline1', 'timeline2']
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'k'), 'timeline2'
+      .toBe 0.5
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'k'), 'timeline1'
+      .toBe 0
+
+
+  # Detach a timeline from an entity.
+  #   timeline: String
+  #   entity: String
+  it 'DetachTimeline', () ->
+    @store.dispatch
+      type: k.RegisterTimeline
+      data:
+        id: 'timeline1'
+        class: 'PathTimeline'
+        data:
+          path: Path.make (Vector2.make 0, 0), [
+            Vector2.make 0, 0
+            Vector2.make 1, 0
+          ]
+    @store.dispatch
+      type: k.RegisterTimeline
+      data:
+        id: 'timeline2'
+        class: 'PathTimeline'
+        data:
+          path: Path.make (Vector2.make 0, 0), [
+            Vector2.make 0, 0
+            Vector2.make 1, 0
+          ]
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        id: 'b'
+        proto: 'birdo'
+        name: 'birdoStamp'
+    @store.dispatch
+      type: k.StampPrototype
+      data:
+        id: 'k'
+        proto: 'kiddo'
+        name: 'kiddoStamp'
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline1'
+        entity: 'b'
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline2'
+        entity: 'b'
+        progress: 0.2
+
+    @store.dispatch
+      type: k.DetachTimeline
+      data:
+        timelineIndex: 0
+        entity: 'b'
+
+    scene = @store.getState().scene
+    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+      .toEqual ['timeline1']
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+      .toBe 0
+
+    @store.dispatch
+      type: k.AttachTimeline
+      data:
+        timeline: 'timeline2'
+        entity: 'b'
+        stackPosition: 1
+    @store.dispatch
+      type: k.DetachTimeline
+      data:
+        timelineIndex: 1
+        entity: 'b'
+
+    scene = @store.getState().scene
+    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+      .toEqual ['timeline1']
+    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+      .toBe 0
+
+
+  # Set how the specified timeline will be controlled.
+  #
+  #   timeline: String
+  #   playbackMethod: 'time' | 'touchX' | 'touchY' | etc
+  xit 'SetTimelinePlaybackMethod', () ->
 
 
   # TODO: this has a bunch of new specs about registering kits

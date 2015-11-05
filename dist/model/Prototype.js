@@ -33,8 +33,8 @@
       });
     };
 
-    Prototype.stamp = function(proto, name) {
-      return Entity.make(name, proto.entity.transform, proto.entity.children, proto);
+    Prototype.stamp = function(proto, transform, name, id) {
+      return Entity.make(name, transform, proto.entity.children, id);
     };
 
     Prototype.getDefinition = function(proto) {

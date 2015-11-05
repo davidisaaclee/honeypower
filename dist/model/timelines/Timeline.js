@@ -10,7 +10,7 @@
   
   Timeline ::=
     id: String
-    class: String
+    type: String
     data: Object
     [updateMethod: String]
    */
@@ -25,12 +25,17 @@
     Timeline.make = (function() {
       var spawnCount;
       spawnCount = 0;
-      return function(classString, data) {
-        return _.assign(new Timeline(), {
-          id: "timeline-" + (spawnCount++),
-          "class": classString,
+      return function(type, data, id) {
+        var config, fields;
+        config = {
+          id: id,
+          type: type,
           data: data
+        };
+        fields = _.defaults(config, {
+          id: "timeline-" + (spawnCount++)
         });
+        return _.assign(new Timeline(), fields);
       };
     })();
 
@@ -38,7 +43,7 @@
     /*
     Modifies `data` according to the timeline's `progress`.
     
-      timeline - the invoking `PathTimeline`
+      timeline: Timeline - the invoking `PathTimeline`
       progress: Float - a number between 0 and 1, the progress of the timeline.
       data: Object - an arbitrary object used as the procedure's base value
       returns a modified copy of `data` - an Object
@@ -51,13 +56,13 @@
 
 
     /*
-    Returns this `Timeline`'s class as a string.
+    Returns this `Timeline`'s type as a string.
     
       timeline - the invoking `Timeline`.
      */
 
-    Timeline.getClass = function(timeline) {
-      return timeline["class"];
+    Timeline.getType = function(timeline) {
+      return timeline.type;
     };
 
     Timeline.setUpdateMethod = function(timeline, updateMethod) {

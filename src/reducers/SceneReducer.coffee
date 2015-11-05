@@ -1,6 +1,5 @@
 _ = require 'lodash'
 updeep = require 'updeep'
-darko = require 'darko'
 {combineReducers} = require 'redux'
 k = require '../ActionTypes'
 
@@ -22,8 +21,6 @@ wrap = require '../util/wrap'
 defaultState = Scene.empty
 
 reducer = (state = defaultState, action) ->
-  state = _.assign {}, state,
-    darko: darko.reducer state.darko, action
   state
   # switch action.type
   #   when k.AddEntity
@@ -34,5 +31,4 @@ reducer = (state = defaultState, action) ->
   #   else state
 
 
-# combined = combineReducers 'darko': darko.reducer
 module.exports = reducer
