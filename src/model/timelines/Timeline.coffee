@@ -1,4 +1,5 @@
 _ = require 'lodash'
+Lens = require 'lens'
 
 ###
 Abstraction for timelines for use with Darko timeline library.
@@ -10,14 +11,17 @@ Timeline ::=
   [updateMethod: String]
 ###
 class Timeline
-  @UpdateMethod:
+
+TimelineFunctions =
+  UpdateMethod:
     Time: 'Time'
 
-  @make: do ->
+  make: do ->
     spawnCount = 0
-    return (type, data, id) ->
+    return (type, length, data, id) ->
       config =
         id: id
+        length: length
         type: type
         data: data
 
@@ -27,30 +31,27 @@ class Timeline
       _.assign new Timeline(), fields
 
   ###
-  Modifies `data` according to the timeline's `progress`.
+  Modifies the provided `data` according to the timeline's `progress`.
 
-    timeline: Timeline - the invoking `PathTimeline`
+    timeline: Timeline - the invoking `Timeline`
     progress: Float - a number between 0 and 1, the progress of the timeline.
-    data: Object - an arbitrary object used as the procedure's base value
-    returns a modified copy of `data` - an Object
+    data: Object - arbitrary data to be modified
+    returns a modified copy of `data`
   ###
-  @mapping: (timeline, progress, data) ->
+  mapping: (timeline, progress, data) ->
     console.warn 'Timeline extension should override `mapping()`.'
     return data
 
-  ###
-  Returns this `Timeline`'s type as a string.
 
-    timeline - the invoking `Timeline`.
-  ###
-  @getType: (timeline) -> timeline.type
+  ### Lenses ###
 
+  type: Object.freeze Lens.fromPath 'type'
 
-  # Mutation
+  updateMethod: Object.freeze Lens.fromPath 'updateMethod'
 
-  @setUpdateMethod: (timeline, updateMethod) ->
-    _.assign {}, timeline,
-      updateMethod: updateMethod
+  id: Object.freeze Lens.fromPath 'id'
+
+  length: Object.freeze Lens.fromPath 'length'
 
 
-module.exports = Timeline
+module.exports = TimelineFunctions

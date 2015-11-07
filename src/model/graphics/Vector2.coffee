@@ -17,6 +17,11 @@ class Vector2 extends Model
 
   @zero: Object.freeze (Vector2.make 0, 0)
 
+  @magnitude: (v) ->
+    Math.sqrt Vector2.squaredMagnitude v
+
+  @squaredMagnitude: (v) ->
+    v.x * v.x + v.y * v.y
 
   @add: (v1, v2) ->
     Vector2.make \
@@ -38,5 +43,11 @@ class Vector2 extends Model
     Vector2.make \
       v1.x * v2.x,
       v1.y * v2.y
+
+  @normalize: (v) ->
+    Vector2.scale v, (1 / Vector2.magnitude v)
+
+  @setMagnitude: (v, magnitude) ->
+    Vector2.scale (Vector2.normalize v), magnitude
 
 module.exports = Vector2

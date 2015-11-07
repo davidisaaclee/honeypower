@@ -3,6 +3,8 @@ u = require 'updeep'
 {createStore} = require 'redux'
 Model = require './Model'
 Entity = require './entities/Entity'
+Timeline = require './timelines/Timeline'
+TimelinesTable = require './timelines/TimelinesTable'
 Set = require '../util/Set'
 
 ###
@@ -25,8 +27,8 @@ class Scene extends Model
 
   @empty: Object.freeze \
     Scene.make \
-      (Set.withHashProperty 'id'),
-      (Set.withHashProperty 'id')
+      (Set.withHashFunction Entity.getId),
+      (Set.withHashFunction Timeline.id.get)
 
 
   # Access
@@ -135,7 +137,6 @@ class Scene extends Model
       Entity.removeTimeline e, timelineIdx
 
 
-  # FIXME
   @updateEntityData: (scene, entityId) ->
     Scene.mutateEntity scene, entityId, (entity) ->
       Scene.Entities.computeEntityData scene, entity
@@ -147,6 +148,32 @@ class Scene extends Model
     then _.assign {}, scene, timelines: (Set.put scene.timelines, proc timeline)
     else scene
 
+
+  @progressTimeline: (scene, timelineId, delta) ->
+    timelineObj = Scene.getTimeline scene, timelineId
+    scaledDelta = delta / Timeline.length.get timelineObj
+
+    # flipped version for easy reduction
+    progressEntity = (s, eId) -> Scene.mutateEntity s, eId, (e) ->
+      currentProgress =
+        Entity.getProgressForTimeline e, timelineId
+      d = switch
+        when (currentProgress + scaledDelta) > 1
+          1 - currentProgress
+        when (currentProgress + scaledDelta) < 0
+          0 - currentProgress
+        else
+          scaledDelta
+
+      Entity.progressTimeline e, timelineId, d
+
+    affectedEntityIds =
+      Scene.getAllEntities scene
+        .filter (entity) -> Entity.isAttachedToTimeline entity, timelineId
+        .map (entity) -> Entity.getId entity
+
+    sceneWithUpdatedProgress = affectedEntityIds.reduce progressEntity, scene
+    affectedEntityIds.reduce Scene.updateEntityData, sceneWithUpdatedProgress
 
 
   ###
@@ -170,7 +197,7 @@ class Scene extends Model
             .map (timelineId) ->
               timeline = Scene.getTimeline scene, timelineId
               progress = Entity.getProgressForTimeline entity, timelineId
-              return (d) -> Timelines.mapping timeline, progress, d
+              return (d) -> TimelinesTable.mapping timeline, progress, d
             .reduce ((data, mutator) -> mutator data), (Entity.getLocalData ent)
 
       if arguments.length is 1
@@ -185,6 +212,5 @@ class Scene extends Model
       if arguments.length is 1
       then ctx
       else ctx.apply null, _.tail arguments
-
 
 module.exports = Scene

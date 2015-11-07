@@ -11,11 +11,11 @@ Entity = require '../src/model/entities/Entity'
 Path = require '../src/model/graphics/Path'
 Vector2 = require '../src/model/graphics/Vector2'
 
-describe 'Scene', () ->
+describe 'Scene:', () ->
   beforeEach () ->
     @empty = createStore sceneReducer
 
-    path = Path.make (Vector2.make [0, 0]), [
+    @path = Path.make (Vector2.make 0, 0), [
       Vector2.make 0, 0
       Vector2.make 1, 1
     ]
@@ -32,14 +32,14 @@ describe 'Scene', () ->
 
     prefilledScene = Scene.with \
       [Entity.make 'kiddo'],
-      [Timeline.make 'PathTimeline', path: path]
+      [Timeline.make 'PathTimeline', 1, path: @path]
 
-    kiddoEntity = Scene.getEntityByName prefilledScene, 'kiddo'
-    timeline = (Scene.getAllTimelines prefilledScene)[0]
-    prefilledScene = Scene.mutateTimeline prefilledScene, timeline.id, (tmln) ->
-      Timeline.setUpdateMethod tmln, Timeline.UpdateMethod.Time
-    prefilledScene = Scene.attachEntityToTimeline prefilledScene, kiddoEntity.id, timeline.id, 0
-
+    kiddoEntityId = Entity.getId (Scene.getEntityByName prefilledScene, 'kiddo')
+    @timelineId = Timeline.id.get (Scene.getAllTimelines prefilledScene)[0]
+    prefilledScene = Scene.mutateTimeline prefilledScene, @timelineId, (tmln) ->
+      Timeline.updateMethod.set tmln, Timeline.UpdateMethod.Time
+    prefilledScene =
+      Scene.attachEntityToTimeline prefilledScene, kiddoEntityId, @timelineId, 0
     @prefilled = createStore sceneReducer, prefilledScene
 
 
@@ -54,8 +54,11 @@ describe 'Scene', () ->
   # Denotes the passing of time. Can be positive, zero, or negative.
   #
   #   delta: Number
-  xit 'DeltaTime', () ->
+  it 'DeltaTime', () ->
     scene = @prefilled.getState()
+
+    expect Path.pointAt @path, 0.5
+      .toEqual Vector2.make 0.5, 0.5
 
     expect Scene.getEntityByName scene, 'kiddo'
       .toBeDefined()
@@ -68,7 +71,10 @@ describe 'Scene', () ->
         delta: 0.5
 
     scene = @prefilled.getState()
-    expect Entity.getPosition (Scene.getEntityByName scene, 'kiddo')
+    kiddo = Scene.getEntityByName scene, 'kiddo'
+    expect Entity.getProgressForTimeline kiddo, @timelineId
+      .toEqual 0.5
+    expect Entity.getPosition kiddo
       .toEqual Vector2.make 0.5, 0.5
 
     @prefilled.dispatch
@@ -86,7 +92,10 @@ describe 'Scene', () ->
         delta: 2
 
     scene = @prefilled.getState()
-    expect Entity.getPosition (Scene.getEntityByName scene, 'kiddo')
+    kiddo = Scene.getEntityByName scene, 'kiddo'
+    expect Entity.getProgressForTimeline kiddo, @timelineId
+      .toBe 1
+    expect Entity.getPosition kiddo
       .toEqual Vector2.make 1, 1
 
     @prefilled.dispatch
@@ -95,5 +104,8 @@ describe 'Scene', () ->
         delta: -0.1
 
     scene = @prefilled.getState()
-    expect Entity.getPosition (Scene.getEntityByName scene, 'kiddo')
+    kiddo = Scene.getEntityByName scene, 'kiddo'
+    expect Entity.getProgressForTimeline kiddo, @timelineId
+      .toBe 0.9
+    expect Entity.getPosition kiddo
       .toEqual Vector2.make 0.9, 0.9

@@ -8,8 +8,8 @@ pairs = require '../../util/pairs'
 # Calculate the polyline connecting all points in `points`.
 calculateLength = (points) ->
   pairs points
-    .map ([src, dst]) ->
-      Vector2.subtract dst, src
+    .map ([src, dst]) -> Vector2.subtract dst, src
+    .map (displacement) -> Vector2.magnitude displacement
     .reduce _.add, 0
 
 ###
@@ -26,11 +26,22 @@ Path ::=
   length: Number
 ###
 class Path extends Model
-  @make: (position = Vector2.zero, points = []) ->
+  @make: () ->
+    args = switch
+      when arguments.length >= 2
+        position: arguments[0], points: arguments[1]
+      when arguments.length is 1
+        points: arguments[0]
+      else {}
+
+    args = _.defaults args,
+      position: Vector2.zero
+      points: []
+
     _.assign (new Path()),
-      position: position
-      points: points
-      length: calculateLength points
+      position: args.position
+      points: args.points
+      length: calculateLength args.points
 
   @empty: Object.freeze Path.make()
 
@@ -46,11 +57,7 @@ class Path extends Model
   # Gets the end point of `path`.
   #
   #     Path.pointAt p, 1 == Path.start p
-  @start: (path) -> _.last path.points
-
-
-  @checkCollision: (pathA, pathB) ->
-    # TODO
+  @end: (path) -> _.last path.points
 
 
   ###
@@ -60,23 +67,23 @@ class Path extends Model
     position: a float between 0 and 1; the position along the path.
   ###
   @pointAt: (path, position) ->
-    scaledPosition = path.length * position
+    distanceLeft = path.length * position
     segments = pairs path.points
 
-    moved = 0
-    targetSegment = null
-    for [src, dst] in segments
-      dist = Vector2.subtract dst, src
-      if moved + dist > scaledPosition
-        targetSegment = [src, dst]
-        break
-      else moved += dist
+    targetSegment = _.find segments, ([src, dst]) ->
+      dist = Vector2.magnitude Vector2.subtract dst, src
+      nextDistanceLeft = distanceLeft - dist
+      if nextDistanceLeft < 0
+        return true
+      else
+        distanceLeft = nextDistanceLeft
+        return false
 
     if targetSegment?
       [src, dst] = targetSegment
       ooChain dst
         .then Vector2.subtract, src
-        .then Vector2.scale, position - moved
+        .then Vector2.setMagnitude, distanceLeft
         .then Vector2.add, src
         .value()
     else

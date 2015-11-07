@@ -61,8 +61,9 @@ reducer = (state = defaultState, action) ->
 
 
     when k.RegisterTimeline
-      {id, type, data} = action.data
-      timeline = Timeline.make type, data, id
+      {id, length, type, data} = _.defaults action.data,
+        length: 1
+      timeline = Timeline.make type, length, data, id
       Editor.mutateScene state, (scene) ->
         Scene.addTimeline scene, timeline
 

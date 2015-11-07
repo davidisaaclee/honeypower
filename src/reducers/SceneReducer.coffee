@@ -3,10 +3,9 @@ updeep = require 'updeep'
 {combineReducers} = require 'redux'
 k = require '../ActionTypes'
 
-
-
 Scene = require '../model/Scene'
 Entity = require '../model/entities/Entity'
+Timeline = require '../model/timelines/Timeline'
 
 Set = require '../util/Set'
 
@@ -18,17 +17,23 @@ wrap = require '../util/wrap'
 
 # entitiesReducer = require './EntityReducer'
 
-defaultState = Scene.empty
+defaultScene = Scene.empty
 
-reducer = (state = defaultState, action) ->
-  state
-  # switch action.type
-  #   when k.AddEntity
-  #     {name, transform, children} = action.data
+reducer = (scene = defaultScene, action) ->
+  switch action.type
+    when k.DeltaTime
+      {delta} = action.data
 
-  #     Scene.addEntity state, (Entity.make name, transform, children)
+      progress = (s, id) ->
+        Scene.progressTimeline s, id, delta
 
-  #   else state
+      Scene.getAllTimelines scene
+        .filter (tl) ->
+          (Timeline.updateMethod.get tl) is Timeline.UpdateMethod.Time
+        .map (tl) -> Timeline.id.get tl
+        .reduce progress, scene
+
+    else scene
 
 
 module.exports = reducer

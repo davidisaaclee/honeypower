@@ -1,6 +1,9 @@
 _ = require 'lodash'
+Lens = require 'lens'
 Timeline = require './Timeline'
 Path = require '../graphics/Path'
+Vector2 = require '../graphics/Vector2'
+Transform = require '../graphics/Transform'
 
 class PathTimeline extends Timeline
   @make: (path) ->
@@ -8,20 +11,25 @@ class PathTimeline extends Timeline
       class: 'PathTimeline'
       path: path
 
+  @path: Lens.fromPath 'data.path'
+
+
   # Timeline
 
   ###
-  Modifies the provided `entity` according to the timeline's `progress`.
+  Modifies the provided `data` according to the timeline's `progress`.
 
-    timeline - the invoking `PathTimeline`
+    timeline: Timeline - the invoking `PathTimeline`
     progress: Float - a number between 0 and 1, the progress of the timeline.
-    entity: Entity
-    returns a modified copy of `entity`
+    data: Object - arbitrary data to be modified
+    returns a modified copy of `data`
   ###
-  @mapping: (timeline, progress, entity) ->
-    dst = Path.pointAt timeline.path, progress
-    delta = Vector2.subtract dst, (Entity.getPosition entity)
-    Entity.translate entity, delta
+  @mapping: (timeline, progress, data) ->
+    dst = Path.pointAt (PathTimeline.path.get timeline), progress
+    delta = Vector2.subtract dst, (Transform.getPosition data.transform)
+
+    _.assign {}, data,
+      transform: Transform.translate data.transform, delta
 
 
 module.exports = PathTimeline

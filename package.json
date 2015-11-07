@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "immutable": "^3.7.5",
+    "lens": "git://github.com/davidisaaclee/lens",
     "lodash": "^3.10.1",
     "redux": "^3.0.2",
     "updeep": "^0.10.1"

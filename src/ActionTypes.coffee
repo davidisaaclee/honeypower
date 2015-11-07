@@ -44,9 +44,10 @@ editorActions = [
 
   # Registers a new timeline.
   #
-  #   [id: String]      # optional user-defined id
-  #   type: String     # class of this timeline
-  #   data: Object      # data specific to the timeline class
+  #   [id: String]          # optional user-defined id
+  #   [length = 1: Number]  # length of timeline - used to scale progress
+  #   type: String          # class of this timeline
+  #   data: Object          # data specific to the timeline class
   'RegisterTimeline'
 
   # Attach a timeline to an entity.

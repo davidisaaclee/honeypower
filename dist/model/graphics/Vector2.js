@@ -33,6 +33,14 @@
 
     Vector2.zero = Object.freeze(Vector2.make(0, 0));
 
+    Vector2.magnitude = function(v) {
+      return Math.sqrt(Vector2.squaredMagnitude(v));
+    };
+
+    Vector2.squaredMagnitude = function(v) {
+      return v.x * v.x + v.y * v.y;
+    };
+
     Vector2.add = function(v1, v2) {
       return Vector2.make(v1.x + v2.x, v1.y + v2.y);
     };
@@ -51,6 +59,14 @@
 
     Vector2.piecewiseMultiply = function(v1, v2) {
       return Vector2.make(v1.x * v2.x, v1.y * v2.y);
+    };
+
+    Vector2.normalize = function(v) {
+      return Vector2.scale(v, 1 / Vector2.magnitude(v));
+    };
+
+    Vector2.setMagnitude = function(v, magnitude) {
+      return Vector2.scale(Vector2.normalize(v), magnitude);
     };
 
     return Vector2;

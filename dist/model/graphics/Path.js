@@ -20,6 +20,8 @@
       var dst, src;
       src = arg[0], dst = arg[1];
       return Vector2.subtract(dst, src);
+    }).map(function(displacement) {
+      return Vector2.magnitude(displacement);
     }).reduce(_.add, 0);
   };
 
@@ -45,17 +47,31 @@
       return Path.__super__.constructor.apply(this, arguments);
     }
 
-    Path.make = function(position, points) {
-      if (position == null) {
-        position = Vector2.zero;
-      }
-      if (points == null) {
-        points = [];
-      }
+    Path.make = function() {
+      var args;
+      args = (function() {
+        switch (false) {
+          case !(arguments.length >= 2):
+            return {
+              position: arguments[0],
+              points: arguments[1]
+            };
+          case arguments.length !== 1:
+            return {
+              points: arguments[0]
+            };
+          default:
+            return {};
+        }
+      }).apply(this, arguments);
+      args = _.defaults(args, {
+        position: Vector2.zero,
+        points: []
+      });
       return _.assign(new Path(), {
-        position: position,
-        points: points,
-        length: calculateLength(points)
+        position: args.position,
+        points: args.points,
+        length: calculateLength(args.points)
       });
     };
 
@@ -65,11 +81,9 @@
       return _.head(path.points);
     };
 
-    Path.start = function(path) {
+    Path.end = function(path) {
       return _.last(path.points);
     };
-
-    Path.checkCollision = function(pathA, pathB) {};
 
 
     /*
@@ -80,24 +94,24 @@
      */
 
     Path.pointAt = function(path, position) {
-      var dist, dst, i, len, moved, ref, scaledPosition, segments, src, targetSegment;
-      scaledPosition = path.length * position;
+      var distanceLeft, dst, segments, src, targetSegment;
+      distanceLeft = path.length * position;
       segments = pairs(path.points);
-      moved = 0;
-      targetSegment = null;
-      for (i = 0, len = segments.length; i < len; i++) {
-        ref = segments[i], src = ref[0], dst = ref[1];
-        dist = Vector2.subtract(dst, src);
-        if (moved + dist > scaledPosition) {
-          targetSegment = [src, dst];
-          break;
+      targetSegment = _.find(segments, function(arg) {
+        var dist, dst, nextDistanceLeft, src;
+        src = arg[0], dst = arg[1];
+        dist = Vector2.magnitude(Vector2.subtract(dst, src));
+        nextDistanceLeft = distanceLeft - dist;
+        if (nextDistanceLeft < 0) {
+          return true;
         } else {
-          moved += dist;
+          distanceLeft = nextDistanceLeft;
+          return false;
         }
-      }
+      });
       if (targetSegment != null) {
         src = targetSegment[0], dst = targetSegment[1];
-        return ooChain(dst).then(Vector2.subtract, src).then(Vector2.scale, position - moved).then(Vector2.add, src).value();
+        return ooChain(dst).then(Vector2.subtract, src).then(Vector2.setMagnitude, distanceLeft).then(Vector2.add, src).value();
       } else {
         return Path.end(path);
       }

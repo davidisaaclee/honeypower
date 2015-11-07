@@ -1,3 +1,6 @@
+# TODO: change all attached timelines to IDs
+#       make it so entities can be attached to any timeline only once
+
 _ = require 'lodash'
 Immutable = require 'immutable'
 
@@ -16,7 +19,9 @@ Entity ::=
   child: Entity
 ###
 class Entity extends Model
-  @make: do ->
+
+EntityFunctions =
+  make: do ->
     _spawnCount = 0
     _nextId = () -> "entity-#{_spawnCount++}"
 
@@ -47,56 +52,64 @@ class Entity extends Model
 
   # Access
 
-  @getId: (entity) -> entity.id
+  getId: (entity) -> entity.id
 
-  @getName: (entity) -> entity.name
+  getName: (entity) -> entity.name
 
-  @getChild: (entity) -> entity.child
+  getChild: (entity) -> entity.child
 
-  @getLocalData: (entity) -> entity.localData
+  getLocalData: (entity) -> entity.localData
 
-  @getComputedData: (entity) -> entity.computedData
+  getComputedData: (entity) -> entity.computedData
 
-  @getTransform: (entity) -> (Entity.getComputedData entity).transform
+  getTimelineStack: (entity) -> entity.timelines.toArray()
 
-  @getPosition: (entity) -> Transform.getPosition Entity.getTransform entity
+  getProgressForTimeline: (entity, timelineId) ->
+    (entity.timelinesData.get timelineId).progress
 
-  @getRotation: (entity) -> Transform.getRotation Entity.getTransform entity
+  isAttachedToTimeline: (entity, timelineId) ->
+    entity.timelinesData.has timelineId
 
-  @getScale: (entity) -> Transform.getScale Entity.getTransform entity
+  getTransform: (entity) ->
+    (EntityFunctions.getComputedData entity).transform
 
-  @getTimelineStack: (entity) -> entity.timelines.toArray()
+  getPosition: (entity) ->
+    Transform.getPosition EntityFunctions.getTransform entity
 
-  @getProgressForTimeline: (entity, timelineId) ->
-    entity.timelinesData.get timelineId
+  getRotation: (entity) ->
+    Transform.getRotation EntityFunctions.getTransform entity
+
+  getScale: (entity) ->
+    Transform.getScale EntityFunctions.getTransform entity
 
 
   # Mutation
 
   # entity [Entity] - to be parent
   # child [Entity]
-  @setChild: (entity, child) ->
+  setChild: (entity, child) ->
     _.assign {}, entity,
       child: child
 
-  @removeChild: (entity) ->
+  removeChild: (entity) ->
     _.assign {}, entity,
       child: null
 
-  @setLocalData: (entity, localData) ->
+  setLocalData: (entity, localData) ->
     _.assign {}, entity,
       localData: localData
 
-  @setComputedData: (entity, computedData) ->
+  setComputedData: (entity, computedData) ->
     _.assign {}, entity,
       computedData: computedData
 
-  @insertTimeline: (entity, timelineId, progress = 0, stackPosition = 0) ->
+  insertTimeline: (entity, timelineId, progress = 0, stackPosition = 0) ->
     _.assign {}, entity,
       timelines: entity.timelines.splice stackPosition, 0, timelineId
-      timelinesData: entity.timelinesData.set timelineId, progress
+      timelinesData: entity.timelinesData.set timelineId,
+        progress: progress
 
-  @removeTimeline: (entity, timelineIdx) ->
+  removeTimeline: (entity, timelineIdx) ->
     timelineId = entity.timelines.get timelineIdx
     if timelineId?
       _.assign {}, entity,
@@ -104,29 +117,37 @@ class Entity extends Model
         timelinesData: entity.timelinesData.delete timelineId
     else entity
 
-  @setTransform: (entity, transform) ->
-    newLocaldata = _.assign (Entity.getLocalData entity),
+  # Simply updates the `progress` field within `timelinesData` - does not update
+  #   `computedData` or respect loop/start/end.
+  progressTimeline: (entity, timelineId, delta) ->
+    _.assign {}, entity,
+      timelinesData: entity.timelinesData.update timelineId, (timelineData) ->
+        _.assign {}, timelineData,
+          progress: timelineData.progress + delta
+
+  setTransform: (entity, transform) ->
+    newLocaldata = _.assign (EntityFunctions.getLocalData entity),
       transform: transform
-    Entity.setLocalData entity, newLocaldata
+    EntityFunctions.setLocalData entity, newLocaldata
 
-  @transform: (entity, {translate, rotate, scale}) ->
+  transform: (entity, {translate, rotate, scale}) ->
     if translate?
-      Entity.translate entity, translate
+      EntityFunctions.translate entity, translate
     if rotate?
-      Entity.rotate entity, rotate
+      EntityFunctions.rotate entity, rotate
     if scale?
-      Entity.scale entity, scale
+      EntityFunctions.scale entity, scale
 
-  @translate: (entity, amount) ->
+  translate: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.translate (Entity.getTransform entity), amount
+      transform: Transform.translate (EntityFunctions.getTransform entity), amount
 
-  @rotate: (entity, amount) ->
+  rotate: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.rotate (Entity.getTransform entity), amount
+      transform: Transform.rotate (EntityFunctions.getTransform entity), amount
 
-  @scale: (entity, amount) ->
+  scale: (entity, amount) ->
     _.assign {}, entity,
-      transform: Transform.scale (Entity.getTransform entity), amount
+      transform: Transform.scale (EntityFunctions.getTransform entity), amount
 
-module.exports = Entity
+module.exports = EntityFunctions

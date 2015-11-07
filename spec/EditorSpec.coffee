@@ -356,7 +356,7 @@ describe 'Editor:', () ->
       .toBe 2
     expect Scene.getTimelineById scene, 'myTimeline'
       .toBeDefined()
-    expect Timeline.getType (Scene.getTimelineById scene, 'myTimeline')
+    expect Timeline.type.get (Scene.getTimelineById scene, 'myTimeline')
       .toEqual 'MockTimeline'
 
 

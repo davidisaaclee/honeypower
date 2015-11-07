@@ -34,7 +34,7 @@
    */
 
   reducer = function(state, action) {
-    var child, data, entity, id, name, onto, parent, progress, proto, ref, ref1, ref2, ref3, ref4, ref5, stackPosition, timeline, timelineIndex, transform, type;
+    var child, data, entity, id, length, name, onto, parent, progress, proto, ref, ref1, ref2, ref3, ref4, ref5, stackPosition, timeline, timelineIndex, transform, type;
     if (state == null) {
       state = defaultState;
     }
@@ -73,8 +73,10 @@
           return Scene.linkEntitiesById(scene, parent, child);
         });
       case k.RegisterTimeline:
-        ref3 = action.data, id = ref3.id, type = ref3.type, data = ref3.data;
-        timeline = Timeline.make(type, data, id);
+        ref3 = _.defaults(action.data, {
+          length: 1
+        }), id = ref3.id, length = ref3.length, type = ref3.type, data = ref3.data;
+        timeline = Timeline.make(type, length, data, id);
         return Editor.mutateScene(state, function(scene) {
           return Scene.addTimeline(scene, timeline);
         });
