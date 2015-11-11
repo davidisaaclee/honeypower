@@ -1,4 +1,5 @@
 _ = require 'lodash'
+Lens = require 'lens'
 Model = require './Model'
 Set = require '../util/Set'
 
@@ -28,19 +29,24 @@ class Kit extends Model
       inspectors: Set.withHashProperty 'name', inspectors
 
 
-  # Access
+  # Lenses
 
-  @getPrototypes: (kit) -> kit.prototypes
+  @allPrototypes: Lens.fromPath 'prototypes'
 
-  @getPhysics: (kit) -> kit.physics
+  @allPhysics: Lens.fromPath 'physics'
 
-  @getInspectors: (kit) -> kit.inspectors
+  @allInspectors: Lens.fromPath 'inspectors'
 
+  @proto: do ->
+    composed = Lens.compose Kit.allPrototypes, Set.element
+    new Lens \
+      (kit, key) -> composed.get kit, [], [key],
+      (kit, key, val) -> composed.get kit, [], [key], val
 
-  @getPrototype: (kit, prototypeName) ->
-    Set.get kit.prototypes, prototypeName
-
-  @getInspector: (kit, inspectorId) ->
-    Set.get Kit.getInspectors, inspectorId
+  @inspector: do ->
+    composed = Lens.compose Kit.allInspectors, Set.element
+    return new Lens \
+      (kit, inspectorId) -> composed.get kit, [], [inspectorId],
+      (kit, inspectorId, val) -> composed.set kit, [], [inspectorId], val
 
 module.exports = Kit

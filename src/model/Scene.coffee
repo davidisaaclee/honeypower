@@ -7,6 +7,8 @@ Timeline = require './timelines/Timeline'
 TimelinesTable = require './timelines/TimelinesTable'
 Set = require '../util/Set'
 
+clamp = require '../util/clamp'
+
 ###
 The main state of an interactive scene.
 
@@ -27,7 +29,7 @@ class Scene extends Model
 
   @empty: Object.freeze \
     Scene.make \
-      (Set.withHashFunction Entity.getId),
+      (Set.withHashFunction Entity.id.get),
       (Set.withHashFunction Timeline.id.get)
 
 
@@ -73,7 +75,7 @@ class Scene extends Model
     if parent? and child?
       newScene = scene
       newScene = Scene.mutateEntity newScene, parent.id, (e) ->
-        Entity.setChild e, child
+        Entity.child.set e, child
       return newScene
     else
       # this is just being too committed to error messages, ignore
@@ -156,21 +158,22 @@ class Scene extends Model
     # flipped version for easy reduction
     progressEntity = (s, eId) -> Scene.mutateEntity s, eId, (e) ->
       currentProgress =
-        Entity.getProgressForTimeline e, timelineId
-      d = switch
-        when (currentProgress + scaledDelta) > 1
-          1 - currentProgress
-        when (currentProgress + scaledDelta) < 0
-          0 - currentProgress
-        else
-          scaledDelta
+        Entity.progressForTimeline.get e, timelineId
+      # d = switch
+      #   when (currentProgress + scaledDelta) > 1
+      #     1 - currentProgress
+      #   when (currentProgress + scaledDelta) < 0
+      #     0 - currentProgress
+      #   else
+      #     scaledDelta
+      newProgress = clamp 0, 1, (currentProgress + scaledDelta)
 
-      Entity.progressTimeline e, timelineId, d
+      Entity.progressForTimeline.set e, timelineId, newProgress
 
     affectedEntityIds =
       Scene.getAllEntities scene
         .filter (entity) -> Entity.isAttachedToTimeline entity, timelineId
-        .map (entity) -> Entity.getId entity
+        .map (entity) -> Entity.id.get entity
 
     sceneWithUpdatedProgress = affectedEntityIds.reduce progressEntity, scene
     affectedEntityIds.reduce Scene.updateEntityData, sceneWithUpdatedProgress
@@ -192,13 +195,13 @@ class Scene extends Model
   @Entities:
     computeEntityData: (scene, entity) ->
       ctx = (ent) ->
-        Entity.setComputedData ent,
-          Entity.getTimelineStack ent
+        Entity.computedData.set ent,
+          Entity.timelineStack.get ent
             .map (timelineId) ->
               timeline = Scene.getTimeline scene, timelineId
-              progress = Entity.getProgressForTimeline entity, timelineId
+              progress = Entity.progressForTimeline.get entity, timelineId
               return (d) -> TimelinesTable.mapping timeline, progress, d
-            .reduce ((data, mutator) -> mutator data), (Entity.getLocalData ent)
+            .reduce ((data, mutator) -> mutator data), (Entity.localData.get ent)
 
       if arguments.length is 1
       then ctx
@@ -206,7 +209,7 @@ class Scene extends Model
 
     mutateLocalData: (scene, entity, mutator) ->
       ctx = (ent, mutator) ->
-        ent = Entity.setLocalData ent, (mutator Entity.getLocalData ent)
+        ent = Entity.localData.set ent, (mutator Entity.localData.get ent)
         ent = Scene.Entities.computeEntityData scene, ent
 
       if arguments.length is 1

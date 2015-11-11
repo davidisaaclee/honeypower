@@ -39,7 +39,6 @@ editorActions = [
   'RequestEntityEditor'
 
 
-  # TODO: still need to test all timeline actions
   # Timelines
 
   # Registers a new timeline.

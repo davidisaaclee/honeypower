@@ -1,9 +1,11 @@
 _ = require 'lodash'
+Lens = require 'Lens'
 
 Model = require '../Model'
 Vector2 = require './Vector2'
 
 wrap = require '../../util/wrap'
+ooChain = require '../../util/ooChain'
 
 ###
 Describes a two-dimensional transform.
@@ -31,36 +33,35 @@ class Transform extends Model
   @withScale: (scale) ->
     Transform.make null, null, scale
 
+  # Lenses
 
-  # Access
+  @position: Lens.fromPath 'position'
 
-  @getPosition: (transform) -> transform.position
+  @rotation: Lens.fromPath 'rotation'
 
-  @getRotation: (transform) -> transform.rotation
-
-  @getScale: (transform) -> transform.scale
+  @scale: Lens.fromPath 'scale'
 
 
   # Mutation
 
   @applyTransform: (transformA, transformB) ->
-    Transform.make \
-      (Vector2.add transformA.position, transformB.position),
-      (transformA.rotation + transformB.rotation),
-      (Vector2.piecewiseMultiply transformA.scale, transformB.scale)
+    ooChain transformA
+      .then Transform.translateBy, Transform.position.get transformB
+      .then Transform.rotateBy, Transform.rotation.get transformB
+      .then Transform.scaleBy, Transform.scale.get transformB
+      .value()
 
-  @translate: (transform, amount) ->
-    _.assign {}, transform,
-      position: Vector2.add transform.position, amount
+  @translateBy: (transform, amount) ->
+    Transform.position.over transform, (position) ->
+      Vector2.add position, amount
 
-  @rotate: (transform, amount) ->
-    _.assign {}, transform,
-      rotate: wrap 0, 2 * Math.PI, transform.rotate + amount
+  @rotateBy: (transform, amount) ->
+    Transform.rotation.over transform, (rotation) ->
+      wrap 0, 2 * Math.PI, rotation + amount
 
-  @scale: (transform, amount) ->
-    _.assign {}, transform,
-      # TODO: this should probably be piecewise multiply?
-      scale: Vector2.add transform.scale, amount
+  @scaleBy: (transform, amount) ->
+    Transform.scale.over transform, (scale) ->
+      Vector2.piecewiseMultiply scale, amount
 
 
 module.exports = Transform

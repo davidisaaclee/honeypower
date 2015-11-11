@@ -1,4 +1,5 @@
 _ = require 'lodash'
+Lens = require 'lens'
 Model = require './Model'
 Scene = require './Scene'
 Kit = require './Kit'
@@ -18,36 +19,40 @@ Editor ::=
 ###
 
 class Editor extends Model
-  @make: (scene = Scene.empty, kits = []) ->
+
+EditorFns =
+  make: (scene = Scene.empty, kits = []) ->
     kitSet = kits.reduce Set.put, Set.withHashProperty 'name'
 
     _.assign (new Editor()),
       scene: scene
       kits: kitSet
 
-  @empty: Object.freeze Editor.make()
-
-  @withKits: (kits = []) -> Editor.make Scene.empty, kits
+  withKits: (kits = []) -> EditorFns.make Scene.empty, kits
 
 
-  # Access
+  ### Lenses ###
 
-  @getScene: (editor) -> editor.scene
+  scene: Lens.fromPath 'scene'
 
-  @getPrototype: (editor, protoKey) ->
-    results = Set.asArray editor.kits
-      .map (kit) -> Kit.getPrototype kit, protoKey
-      .filter (x) -> x?
+  proto: do ->
+    getter = (model, key) ->
+      results = Set.asArray model.kits
+        .map (kit) -> Kit.proto.get kit, key
+        .filter (x) -> x?
 
-    switch results.length
-      when 0
-        undefined
-      when 1
-        results[0]
-      else
-        console.warn 'More than one prototype with key', protoKey
-        results[0]
+      switch results.length
+        when 0
+          undefined
+        when 1
+          results[0]
+        else
+          console.warn 'More than one prototype with key', key
+          results[0]
+    return new Lens getter, null
 
+
+  ### Mutation ###
 
   # Creates a stamped copy of the specified prototype entity.
   #
@@ -56,23 +61,15 @@ class Editor extends Model
   #   transform [Transform]
   #   [name [String]] - a name for the new stamped `Entity`
   #   [id [String]] - a user-defined id for the new `Entity`
-  @stampPrototype: (editor, protoKey, transform, name, id) ->
-    proto = Editor.getPrototype editor, protoKey
-    # _.assign {}, (_.omit proto, 'protoKey')
+  stampPrototype: (editor, protoKey, transform, name, id) ->
+    proto = EditorFns.proto.get editor, protoKey
     Prototype.stamp proto, transform, name, id
 
 
-  # Mutation
 
-  @setScene: (editor, scene) ->
-    _.assign {}, editor, scene: scene
+# Self-referential properties
+_.assign EditorFns,
+  empty: Object.freeze EditorFns.make()
 
-  @mutateScene: (editor, mutator) ->
-    Editor.setScene editor, mutator Editor.getScene editor
 
-  @addPrototype: (editor, protoKey, entity) ->
-    entity.protoKey = protoKey
-    _.assign {}, editor,
-      prototypes: Set.put editor.prototypes, entity
-
-module.exports = Editor
+module.exports = EditorFns

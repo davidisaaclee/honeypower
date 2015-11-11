@@ -26,10 +26,10 @@ class PathTimeline extends Timeline
   ###
   @mapping: (timeline, progress, data) ->
     dst = Path.pointAt (PathTimeline.path.get timeline), progress
-    delta = Vector2.subtract dst, (Transform.getPosition data.transform)
+    delta = Vector2.subtract dst, (Transform.position.get data.transform)
 
     _.assign {}, data,
-      transform: Transform.translate data.transform, delta
+      transform: Transform.translateBy data.transform, delta
 
 
 module.exports = PathTimeline

@@ -45,13 +45,13 @@ TimelineFunctions =
 
   ### Lenses ###
 
-  type: Object.freeze Lens.fromPath 'type'
+  type: Lens.fromPath 'type'
 
-  updateMethod: Object.freeze Lens.fromPath 'updateMethod'
+  updateMethod: Lens.fromPath 'updateMethod'
 
-  id: Object.freeze Lens.fromPath 'id'
+  id: Lens.fromPath 'id'
 
-  length: Object.freeze Lens.fromPath 'length'
+  length: Lens.fromPath 'length'
 
 
 module.exports = TimelineFunctions

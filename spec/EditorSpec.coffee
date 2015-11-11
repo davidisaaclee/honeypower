@@ -35,7 +35,7 @@ describe 'Editor:', () ->
 
 
   it '(kit access)', () ->
-    expect (Editor.getPrototype @store.getState(), 'birdo')
+    expect (Editor.proto.get @store.getState(), 'birdo')
       .toBeDefined()
 
 
@@ -47,8 +47,8 @@ describe 'Editor:', () ->
   #   [onto: String | null]
   #     set to null or undefined for placing directly into scene
   it 'StampPrototype (onto scene)', () ->
-    birdoProto = Editor.getPrototype @store.getState(), 'birdo'
-    expect Entity.getPosition (Prototype.getDefinition birdoProto)
+    birdoProto = Editor.proto.get @store.getState(), 'birdo'
+    expect Entity.position.get (Prototype.getDefinition birdoProto)
       .toEqual (Vector2.make 0, 0)
     expect (Scene.getAllEntities @store.getState().scene)
       .toEqual []
@@ -63,12 +63,12 @@ describe 'Editor:', () ->
 
     expect (Scene.getAllEntities @store.getState().scene).length
       .toBe 1
-    expect Entity.getName (Scene.getAllEntities @store.getState().scene)[0]
+    expect Entity.name.get (Scene.getAllEntities @store.getState().scene)[0]
       .toEqual 'birdoStamp'
-    expect Entity.getPosition (Scene.getAllEntities @store.getState().scene)[0]
+    expect Entity.position.get (Scene.getAllEntities @store.getState().scene)[0]
       .toEqual (Vector2.make 10, 10)
-    birdoProto = Editor.getPrototype @store.getState(), 'birdo'
-    expect Entity.getPosition (Prototype.getDefinition birdoProto)
+    birdoProto = Editor.proto.get @store.getState(), 'birdo'
+    expect Entity.position.get (Prototype.getDefinition birdoProto)
       .toEqual (Vector2.make 0, 0)
 
     @store.dispatch
@@ -165,11 +165,11 @@ describe 'Editor:', () ->
         transform: Transform.withPosition initialPosition
 
     birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
-    expect Entity.getPosition birdoInstance
+    expect Entity.position.get birdoInstance
       .toEqual initialPosition
-    expect Entity.getRotation birdoInstance
+    expect Entity.rotation.get birdoInstance
       .toEqual 0
-    expect Entity.getScale birdoInstance
+    expect Entity.scale.get birdoInstance
       .toEqual (Vector2.make 1, 1)
 
     translationAmount = Vector2.make 2, 2
@@ -181,11 +181,11 @@ describe 'Editor:', () ->
         transform: Transform.withPosition translationAmount
 
     birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
-    expect Entity.getPosition birdoInstance
+    expect Entity.position.get birdoInstance
       .toEqual (Vector2.add initialPosition, translationAmount)
-    expect Entity.getRotation birdoInstance
+    expect Entity.rotation.get birdoInstance
       .toEqual 0
-    expect Entity.getScale birdoInstance
+    expect Entity.scale.get birdoInstance
       .toEqual (Vector2.make 1, 1)
 
     xform = Transform.make \
@@ -199,11 +199,11 @@ describe 'Editor:', () ->
         transform: xform
 
     birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
-    expect Entity.getPosition birdoInstance
+    expect Entity.position.get birdoInstance
       .toEqual (Vector2.add initialPosition, (Vector2.scale translationAmount, 2))
-    expect Entity.getRotation birdoInstance
+    expect Entity.rotation.get birdoInstance
       .toBeCloseTo (Math.PI / 2)
-    expect Entity.getScale birdoInstance
+    expect Entity.scale.get birdoInstance
       .toEqual (Vector2.make 2, 1)
 
     @store.dispatch
@@ -213,11 +213,11 @@ describe 'Editor:', () ->
         transform: Transform.withScale (Vector2.make 3, 2)
 
     birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
-    expect Entity.getPosition birdoInstance
+    expect Entity.position.get birdoInstance
       .toEqual (Vector2.add initialPosition, (Vector2.scale translationAmount, 2))
-    expect Entity.getRotation birdoInstance
+    expect Entity.rotation.get birdoInstance
       .toBeCloseTo (Math.PI / 2)
-    expect Entity.getScale birdoInstance
+    expect Entity.scale.get birdoInstance
       .toEqual (Vector2.make 6, 2)
 
 
@@ -257,13 +257,13 @@ describe 'Editor:', () ->
     expect kiddoInstance
       .toBeDefined()
 
-    expect Entity.getChild birdoInstance
+    expect Entity.child.get birdoInstance
       .not.toBeNull()
-    expect (Entity.getChild birdoInstance).name
+    expect (Entity.child.get birdoInstance).name
       .toBe 'kiddoStamp'
-    expect Entity.getChild birdoInstance
+    expect Entity.child.get birdoInstance
       .toEqual kiddoInstance
-    expect Entity.getChild kiddoInstance
+    expect Entity.child.get kiddoInstance
       .toBeNull()
 
 
@@ -307,11 +307,11 @@ describe 'Editor:', () ->
     expect kiddoInstance
       .toBeDefined()
 
-    expect Entity.getChild birdoInstance
+    expect Entity.child.get birdoInstance
       .toBeDefined()
-    expect (Entity.getChild birdoInstance).name
+    expect (Entity.child.get birdoInstance).name
       .toEqual 'kiddoStamp'
-    expect Entity.getChild (Entity.getChild birdoInstance)
+    expect Entity.child.get (Entity.child.get birdoInstance)
       .toBeNull()
 
 
@@ -400,9 +400,9 @@ describe 'Editor:', () ->
         name: 'kiddoStamp'
 
     scene = @store.getState().scene
-    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
       .toEqual []
-    expect Entity.getTimelineStack Scene.getEntity scene, 'k'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'k'
       .toEqual []
 
     @store.dispatch
@@ -412,9 +412,9 @@ describe 'Editor:', () ->
         entity: 'b'
 
     scene = @store.getState().scene
-    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
       .toEqual ['timeline1']
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
       .toBe 0
 
     @store.dispatch
@@ -425,11 +425,11 @@ describe 'Editor:', () ->
         progress: 0.2
 
     scene = @store.getState().scene
-    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
       .toEqual ['timeline2', 'timeline1']
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
       .toBe 0
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline2'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline2'
       .toBe 0.2
 
     @store.dispatch
@@ -446,11 +446,11 @@ describe 'Editor:', () ->
         progress: 0.5
 
     scene = @store.getState().scene
-    expect Entity.getTimelineStack Scene.getEntity scene, 'k'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'k'
       .toEqual ['timeline1', 'timeline2']
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'k'), 'timeline2'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'k'), 'timeline2'
       .toBe 0.5
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'k'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'k'), 'timeline1'
       .toBe 0
 
 
@@ -509,9 +509,9 @@ describe 'Editor:', () ->
         entity: 'b'
 
     scene = @store.getState().scene
-    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
       .toEqual ['timeline1']
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
       .toBe 0
 
     @store.dispatch
@@ -527,9 +527,9 @@ describe 'Editor:', () ->
         entity: 'b'
 
     scene = @store.getState().scene
-    expect Entity.getTimelineStack Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
       .toEqual ['timeline1']
-    expect Entity.getProgressForTimeline (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
       .toBe 0
 
 

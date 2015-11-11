@@ -15,8 +15,8 @@ describe 'Entities', () ->
 
     @getEntities = () => @store.getState().entities
 
-    @birdoId = Entity.getId (Scene.getEntityByName @store.getState(), 'birdo')
-    @kiddoId = Entity.getId (Scene.getEntityByName @store.getState(), 'kiddo')
+    @birdoId = Entity.id.get (Scene.getEntityByName @store.getState(), 'birdo')
+    @kiddoId = Entity.id.get (Scene.getEntityByName @store.getState(), 'kiddo')
 
 
   it 'loads default state', () ->
@@ -25,19 +25,3 @@ describe 'Entities', () ->
 
     expect Set.count entities
       .toEqual 0
-
-
-  # these are covered by EditorSpec...
-
-  # xit 'can add children', () ->
-  #   @store.dispatch
-  #     type: k.AddChild
-  #     data:
-  #       parent: birdoId
-  #       child: kiddoId
-
-
-  # xit 'can remove children', () ->
-
-
-  # xit 'can transform', () ->

@@ -5,11 +5,14 @@ sceneReducer = require '../src/reducers/SceneReducer'
 
 Scene = require '../src/model/Scene'
 Timeline = require '../src/model/timelines/Timeline'
+PathTimeline = require '../src/model/timelines/PathTimeline'
 
 Entity = require '../src/model/entities/Entity'
 
 Path = require '../src/model/graphics/Path'
 Vector2 = require '../src/model/graphics/Vector2'
+
+ooChain = require '../src/util/ooChain'
 
 describe 'Scene:', () ->
   beforeEach () ->
@@ -20,26 +23,21 @@ describe 'Scene:', () ->
       Vector2.make 1, 1
     ]
 
-    # ooChain null
-    #   .let 'kiddo': Entity.make 'kiddo'
-    #   .let 'timeline': Timeline.make 'PathTimeline', path
-    #   .in (l) -> Scene.with [l.kiddo], [l.timeline]
-    #   .let (v) -> 'kiddoEntity': Scene.getEntityByName v, 'kiddo'
-    #   .let (v) -> 'timeline': (Scene.getAllTimelines prefilledScene)[0]
-    #   .in (l) ->
-    #     [Scene.attachEntityToTimeline, l.kiddoEntity.id, l.timeline.id, 0]
-    #   .value()
+    prefilledScene = ooChain null
+      .let 'kiddo': Entity.make 'kiddo'
+      .let 'timeline': Timeline.make 'PathTimeline', 1, path: @path
+      .in (v, l) -> Scene.with [l.kiddo], [l.timeline]
+      .let (v) -> 'kiddoEntity': Scene.getEntityByName v, 'kiddo'
+      .let (v) -> 'timeline': (Scene.getAllTimelines v)[0]
+      .in (v, l) ->
+        Scene.mutateTimeline v, l.timeline.id, (tmln) ->
+          Timeline.updateMethod.set tmln, Timeline.UpdateMethod.Time
+      .in (v, l) ->
+        Scene.attachEntityToTimeline v, l.kiddoEntity.id, l.timeline.id, 0
+      .value()
 
-    prefilledScene = Scene.with \
-      [Entity.make 'kiddo'],
-      [Timeline.make 'PathTimeline', 1, path: @path]
-
-    kiddoEntityId = Entity.getId (Scene.getEntityByName prefilledScene, 'kiddo')
     @timelineId = Timeline.id.get (Scene.getAllTimelines prefilledScene)[0]
-    prefilledScene = Scene.mutateTimeline prefilledScene, @timelineId, (tmln) ->
-      Timeline.updateMethod.set tmln, Timeline.UpdateMethod.Time
-    prefilledScene =
-      Scene.attachEntityToTimeline prefilledScene, kiddoEntityId, @timelineId, 0
+
     @prefilled = createStore sceneReducer, prefilledScene
 
 
@@ -62,7 +60,7 @@ describe 'Scene:', () ->
 
     expect Scene.getEntityByName scene, 'kiddo'
       .toBeDefined()
-    expect Entity.getPosition (Scene.getEntityByName scene, 'kiddo')
+    expect Entity.position.get (Scene.getEntityByName scene, 'kiddo')
       .toEqual Vector2.make 0, 0
 
     @prefilled.dispatch
@@ -72,9 +70,9 @@ describe 'Scene:', () ->
 
     scene = @prefilled.getState()
     kiddo = Scene.getEntityByName scene, 'kiddo'
-    expect Entity.getProgressForTimeline kiddo, @timelineId
+    expect Entity.progressForTimeline.get kiddo, @timelineId
       .toEqual 0.5
-    expect Entity.getPosition kiddo
+    expect Entity.position.get kiddo
       .toEqual Vector2.make 0.5, 0.5
 
     @prefilled.dispatch
@@ -83,7 +81,7 @@ describe 'Scene:', () ->
         delta: -0.2
 
     scene = @prefilled.getState()
-    expect Entity.getPosition (Scene.getEntityByName scene, 'kiddo')
+    expect Entity.position.get (Scene.getEntityByName scene, 'kiddo')
       .toEqual Vector2.make 0.3, 0.3
 
     @prefilled.dispatch
@@ -93,9 +91,9 @@ describe 'Scene:', () ->
 
     scene = @prefilled.getState()
     kiddo = Scene.getEntityByName scene, 'kiddo'
-    expect Entity.getProgressForTimeline kiddo, @timelineId
+    expect Entity.progressForTimeline.get kiddo, @timelineId
       .toBe 1
-    expect Entity.getPosition kiddo
+    expect Entity.position.get kiddo
       .toEqual Vector2.make 1, 1
 
     @prefilled.dispatch
@@ -105,7 +103,7 @@ describe 'Scene:', () ->
 
     scene = @prefilled.getState()
     kiddo = Scene.getEntityByName scene, 'kiddo'
-    expect Entity.getProgressForTimeline kiddo, @timelineId
+    expect Entity.progressForTimeline.get kiddo, @timelineId
       .toBe 0.9
-    expect Entity.getPosition kiddo
+    expect Entity.position.get kiddo
       .toEqual Vector2.make 0.9, 0.9

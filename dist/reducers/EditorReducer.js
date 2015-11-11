@@ -41,12 +41,12 @@
     switch (action.type) {
       case k.RemoveEntity:
         entity = action.data.entity;
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           return Scene.removeEntity(scene, entity);
         });
       case k.StampPrototype:
         ref = action.data, id = ref.id, proto = ref.proto, onto = ref.onto, name = ref.name, transform = ref.transform;
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           var newScene, parentObj, stamp;
           stamp = Editor.stampPrototype(state, proto, transform, name, id);
           newScene = Scene.addEntity(scene, stamp);
@@ -58,7 +58,7 @@
         });
       case k.TransformEntity:
         ref1 = action.data, entity = ref1.entity, transform = ref1.transform;
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           return Scene.mutateEntity(scene, entity, function(e) {
             return Scene.Entities.mutateLocalData(scene, e, function(data) {
               return _.assign({}, data, {
@@ -69,7 +69,7 @@
         });
       case k.LinkEntities:
         ref2 = action.data, parent = ref2.parent, child = ref2.child;
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           return Scene.linkEntitiesById(scene, parent, child);
         });
       case k.RegisterTimeline:
@@ -77,7 +77,7 @@
           length: 1
         }), id = ref3.id, length = ref3.length, type = ref3.type, data = ref3.data;
         timeline = Timeline.make(type, length, data, id);
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           return Scene.addTimeline(scene, timeline);
         });
       case k.AttachTimeline:
@@ -85,12 +85,12 @@
           progress: 0,
           stackPosition: 0
         }), timeline = ref4.timeline, entity = ref4.entity, progress = ref4.progress, stackPosition = ref4.stackPosition;
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           return Scene.attachEntityToTimeline(scene, entity, timeline, progress, stackPosition);
         });
       case k.DetachTimeline:
         ref5 = action.data, timelineIndex = ref5.timelineIndex, entity = ref5.entity;
-        return Editor.mutateScene(state, function(scene) {
+        return Editor.scene.over(state, function(scene) {
           return Scene.detachEntityFromTimelineAtIndex(scene, entity, timelineIndex);
         });
       default:

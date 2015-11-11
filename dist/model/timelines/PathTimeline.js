@@ -45,9 +45,9 @@
     PathTimeline.mapping = function(timeline, progress, data) {
       var delta, dst;
       dst = Path.pointAt(PathTimeline.path.get(timeline), progress);
-      delta = Vector2.subtract(dst, Transform.getPosition(data.transform));
+      delta = Vector2.subtract(dst, Transform.position.get(data.transform));
       return _.assign({}, data, {
-        transform: Transform.translate(data.transform, delta)
+        transform: Transform.translateBy(data.transform, delta)
       });
     };
 

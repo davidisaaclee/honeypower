@@ -1,61 +1,50 @@
 _ = require 'lodash'
+Lens = require 'lens'
 
 ###
 Simple immutable set implementation.
 ###
 class Set
-  @withHashFunction: (hashFunction, initial = []) ->
-    set = _.assign (new Set()),
-      _hash: hashFunction
-      _elements: Object.freeze {}
+  constructor: (hashFunction = Object.prototype.toString, elementDict = {}) ->
+    @_hash = hashFunction
+    @_elements = elementDict
 
+  @withHashFunction: (hashFunction, initial = []) ->
+    set = new Set hashFunction, Object.freeze {}
     initial.reduce Set.put, set
 
   @withHashProperty: (hashProperty, initial = []) ->
-    set = _.assign (new Set()),
-      _hash: (obj) -> obj[hashProperty]
-      _elements: Object.freeze {}
-
+    set = new Set (_.property hashProperty), Object.freeze {}
     initial.reduce Set.put, set
+
+
+  # Lenses
+
+  @element: Lens.fromPath (hash) -> ['_elements', hash]
 
 
   # Access
 
-  @get: (set, hash) ->
-    set._elements[hash]
+  @get: (set, hash) -> Set.element.get set, hash
 
-  @contains: (set, element) ->
-    console.log 'contains', set, element
-    set._elements[set._hash element]?
+  @contains: (set, element) -> (Set.element.get set, set._hash element)?
 
-  @count: (set) ->
-    (Object.keys set._elements).length
+  @count: (set) -> (Object.keys set._elements).length
 
-  @find: (set, predicate) ->
-    _.find (Set.asArray set), predicate
+  @find: (set, predicate) -> _.find (Set.asArray set), predicate
 
-  @asArray: (set) ->
-    _.values set._elements
+  @asArray: (set) -> _.values set._elements
 
-  @asObject: (set) ->
-    set._elements
+  @asObject: (set) -> set._elements
 
 
   # Mutation
 
-  @put: (set, element) ->
-    delta = {}
-    delta[set._hash element] = element
+  @put: (set, element) -> Set.element.set set, (set._hash element), element
 
-    _.assign {}, set,
-      _elements: _.assign {}, set._elements, delta
+  @remove: (set, element) -> Set.removeByHash set, set._hash element
 
-  @remove: (set, element) ->
-    Set.removeByHash set, set._hash element
-
-  @removeByHash: (set, hash) ->
-    _.assign {}, set,
-      _elements: _.omit set._elements, hash
+  @removeByHash: (set, hash) -> _.assign {}, set, _elements: _.omit set._elements, hash
 
 
 module.exports = Set

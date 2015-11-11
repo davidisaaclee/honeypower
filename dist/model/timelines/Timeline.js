@@ -59,15 +59,11 @@
       return data;
     },
 
-    /*
-    Returns this `Timeline`'s type as a string.
-    
-      timeline - the invoking `Timeline`.
-     */
-    type: Object.freeze(Lens.fromPath('type')),
-    updateMethod: Object.freeze(Lens.fromPath('updateMethod')),
-    id: Object.freeze(Lens.fromPath('id')),
-    length: Object.freeze(Lens.fromPath('length'))
+    /* Lenses */
+    type: Lens.fromPath('type'),
+    updateMethod: Lens.fromPath('updateMethod'),
+    id: Lens.fromPath('id'),
+    length: Lens.fromPath('length')
   };
 
   module.exports = TimelineFunctions;

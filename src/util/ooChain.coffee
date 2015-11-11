@@ -1,3 +1,4 @@
+_ = require 'lodash'
 
 ###
 Utility for writing mutation chains with object-oriented functions.
@@ -27,7 +28,17 @@ Utility for writing mutation chains with object-oriented functions.
       .in (lets) -> [g, lets.qux]
       .value()
 ###
-module.exports = ooChain = (object) ->
+module.exports = ooChain = (object, bound = {}) ->
+  let: (assignments) ->
+    switch
+      when _.isFunction assignments
+        ooChain object, (_.extend {}, bound, (assignments object, bound))
+      when _.isObject assignments
+        ooChain object, (_.extend {}, bound, assignments)
+      else
+        ooChain object, bound
+  in: (injection) ->
+    ooChain (injection object, bound), bound
   then: (fn, args...) ->
-    ooChain (fn object, args...)
+    ooChain (fn object, args...), bound
   value: () -> object

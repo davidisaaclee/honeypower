@@ -3,6 +3,7 @@
 
 _ = require 'lodash'
 Immutable = require 'immutable'
+Lens = require 'lens'
 
 Set = require '../../util/Set'
 
@@ -44,64 +45,65 @@ EntityFunctions =
         localData: initialData
         computedData: initialData
 
+      return _.assign new Entity(), fields
 
-      r = _.assign new Entity(), fields
 
-      return r
+  ### Lenses ###
+
+  id: Lens.fromPath 'id'
+
+  name: Lens.fromPath 'name'
+
+  child: Lens.fromPath 'child'
+
+  localData: Lens.fromPath 'localData'
+
+  computedData: Lens.fromPath 'computedData'
+
+  timelineStack: new Lens \
+    (entity) -> entity.timelines.toArray(),
+    null
+
+  timelineData: new Lens \
+    (entity, timelineId) -> entity.timelinesData.get timelineId,
+    (entity, timelineId, val) -> _.assign {}, entity,
+      timelinesData: entity.timelinesData.set timelineId, val
+
+  progressForTimeline: new Lens \
+    (entity, timelineId) -> (entity.timelinesData.get timelineId).progress,
+    (entity, timelineId, progress) ->
+      EntityFunctions.timelineData.over entity, timelineId, (timelineData) ->
+        _.assign {}, timelineData, { progress: progress }
+
+  # transform:
+  #   Lens.compose (Lens.fromPath 'computedData'), (Lens.fromPath 'transform')
+
+  # position: Lens.compose EntityFunctions.transform, Transform.position
 
 
   # Access
 
-  getId: (entity) -> entity.id
-
-  getName: (entity) -> entity.name
-
-  getChild: (entity) -> entity.child
-
-  getLocalData: (entity) -> entity.localData
-
-  getComputedData: (entity) -> entity.computedData
-
-  getTimelineStack: (entity) -> entity.timelines.toArray()
-
-  getProgressForTimeline: (entity, timelineId) ->
-    (entity.timelinesData.get timelineId).progress
-
   isAttachedToTimeline: (entity, timelineId) ->
     entity.timelinesData.has timelineId
 
-  getTransform: (entity) ->
-    (EntityFunctions.getComputedData entity).transform
+  # getTransform: (entity) ->
+  #   (EntityFunctions.computedData.get entity).transform
 
-  getPosition: (entity) ->
-    Transform.getPosition EntityFunctions.getTransform entity
+  # getPosition: (entity) ->
+  #   Transform.getPosition EntityFunctions.transform.get entity
 
-  getRotation: (entity) ->
-    Transform.getRotation EntityFunctions.getTransform entity
+  # getRotation: (entity) ->
+  #   Transform.getRotation EntityFunctions.transform.get entity
 
-  getScale: (entity) ->
-    Transform.getScale EntityFunctions.getTransform entity
+  # getScale: (entity) ->
+  #   Transform.getScale EntityFunctions.transform.get entity
 
 
   # Mutation
 
-  # entity [Entity] - to be parent
-  # child [Entity]
-  setChild: (entity, child) ->
-    _.assign {}, entity,
-      child: child
-
-  removeChild: (entity) ->
-    _.assign {}, entity,
-      child: null
-
-  setLocalData: (entity, localData) ->
-    _.assign {}, entity,
-      localData: localData
-
-  setComputedData: (entity, computedData) ->
-    _.assign {}, entity,
-      computedData: computedData
+  removeChild: (entity) -> EntityFunctions.child.set entity, null
+    # _.assign {}, entity,
+    #   child: null
 
   insertTimeline: (entity, timelineId, progress = 0, stackPosition = 0) ->
     _.assign {}, entity,
@@ -119,35 +121,58 @@ EntityFunctions =
 
   # Simply updates the `progress` field within `timelinesData` - does not update
   #   `computedData` or respect loop/start/end.
-  progressTimeline: (entity, timelineId, delta) ->
+  # progressTimeline: (entity, timelineId, delta) ->
+  #   _.assign {}, entity,
+  #     timelinesData: entity.timelinesData.update timelineId, (timelineData) ->
+  #       _.assign {}, timelineData,
+  #         progress: timelineData.progress + delta
+
+  # setTransform: (entity, transform) ->
+  #   newLocaldata = _.assign (EntityFunctions.getLocalData entity),
+  #     transform: transform
+  #   EntityFunctions.setLocalData entity, newLocaldata
+
+  # transform: (entity, {translate, rotate, scale}) ->
+  #   if translate?
+  #     EntityFunctions.translate entity, translate
+  #   if rotate?
+  #     EntityFunctions.rotate entity, rotate
+  #   if scale?
+  #     EntityFunctions.scale entity, scale
+
+
+  # TODO: these transform functions are not tested
+
+  translateBy: (entity, amount) ->
+    EntityFunctions.transform.over entity, (transform) ->
+      Transform.translateBy transform, amount
+    # _.assign {}, entity,
+    #   transform: Transform.translateBy (EntityFunctions.transform.get entity), amount
+
+  rotateBy: (entity, amount) ->
+    EntityFunctions.transform.over entity, (transform) ->
+      Transform.rotateBy transform, amount
+    # _.assign {}, entity,
+    #   transform: Transform.rotateBy (EntityFunctions.transform.get entity), amount
+
+  scaleBy: (entity, amount) ->
+    EntityFunctions.transform.over entity, (transform) ->
+      Transform.scaleBy transform, amount
     _.assign {}, entity,
-      timelinesData: entity.timelinesData.update timelineId, (timelineData) ->
-        _.assign {}, timelineData,
-          progress: timelineData.progress + delta
+      transform: Transform.scaleBy (EntityFunctions.transform.get entity), amount
 
-  setTransform: (entity, transform) ->
-    newLocaldata = _.assign (EntityFunctions.getLocalData entity),
-      transform: transform
-    EntityFunctions.setLocalData entity, newLocaldata
 
-  transform: (entity, {translate, rotate, scale}) ->
-    if translate?
-      EntityFunctions.translate entity, translate
-    if rotate?
-      EntityFunctions.rotate entity, rotate
-    if scale?
-      EntityFunctions.scale entity, scale
 
-  translate: (entity, amount) ->
-    _.assign {}, entity,
-      transform: Transform.translate (EntityFunctions.getTransform entity), amount
+# Self-referential properties
 
-  rotate: (entity, amount) ->
-    _.assign {}, entity,
-      transform: Transform.rotate (EntityFunctions.getTransform entity), amount
+_.assign EntityFunctions,
+  transform:
+    Lens.compose EntityFunctions.computedData, Lens.fromPath 'transform'
 
-  scale: (entity, amount) ->
-    _.assign {}, entity,
-      transform: Transform.scale (EntityFunctions.getTransform entity), amount
+_.assign EntityFunctions,
+  position: Lens.compose EntityFunctions.transform, Transform.position
+  rotation: Lens.compose EntityFunctions.transform, Transform.rotation
+  scale: Lens.compose EntityFunctions.transform, Transform.scale
+
 
 module.exports = EntityFunctions

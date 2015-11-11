@@ -23,7 +23,7 @@ reducer = (state = defaultState, action) ->
   switch action.type
     when k.RemoveEntity
       {entity} = action.data
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         Scene.removeEntity scene, entity
 
 
@@ -31,7 +31,7 @@ reducer = (state = defaultState, action) ->
       {id, proto, onto, name, transform} = action.data
 
 
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         stamp = Editor.stampPrototype state, proto, transform, name, id
         newScene = Scene.addEntity scene, stamp
 
@@ -46,7 +46,7 @@ reducer = (state = defaultState, action) ->
       {entity, transform} = action.data
 
 
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         Scene.mutateEntity scene, entity, (e) ->
           Scene.Entities.mutateLocalData scene, e, (data) ->
             _.assign {}, data,
@@ -56,7 +56,7 @@ reducer = (state = defaultState, action) ->
 
     when k.LinkEntities
       {parent, child} = action.data
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         Scene.linkEntitiesById scene, parent, child
 
 
@@ -64,7 +64,7 @@ reducer = (state = defaultState, action) ->
       {id, length, type, data} = _.defaults action.data,
         length: 1
       timeline = Timeline.make type, length, data, id
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         Scene.addTimeline scene, timeline
 
 
@@ -78,7 +78,7 @@ reducer = (state = defaultState, action) ->
         progress: 0
         stackPosition: 0
 
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         Scene.attachEntityToTimeline scene,
           entity, timeline, progress, stackPosition
 
@@ -89,7 +89,7 @@ reducer = (state = defaultState, action) ->
     when k.DetachTimeline
       {timelineIndex, entity} = action.data
 
-      Editor.mutateScene state, (scene) ->
+      Editor.scene.over state, (scene) ->
         Scene.detachEntityFromTimelineAtIndex scene, entity, timelineIndex
 
     else state
