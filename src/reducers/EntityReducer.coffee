@@ -13,19 +13,20 @@ defaultState = Set.withHashFunction (entity) -> entity.id
 Reducer for all actions contained within entities.
 ###
 reducer = (state = defaultState, action) ->
-  switch action.type
-    when k.TransformEntity
-      {entityId, translate, rotate, scale} = action.data
-      if Set.contains state, entityId
-        entity = Set.get state, entityId
-        newEntity = Entity.transform entity,
-          translate: translate
-          rotate: rotate
-          scale: scale
+  return state
+  # switch action.type
+  #   when k.TransformEntity
+  #     {entityId, translate, rotate, scale} = action.data
+  #     if Set.contains state, entityId
+  #       entity = Set.get state, entityId
+  #       newEntity = Entity.transform entity,
+  #         translate: translate
+  #         rotate: rotate
+  #         scale: scale
 
-        Set.put state, newEntity
+  #       Set.put state, newEntity
 
-    else state
+  #   else state
 
 
 module.exports = reducer

@@ -2,22 +2,23 @@
   "name": "honeypower",
   "version": "0.1.0",
   "description": "",
-  "main": "dist/*.js",
+  "main": "dist/honeypower.js",
   "scripts": {
+    "demo": "npm run watch-demo & npm run livereload-demo",
+    "build": "npm run build:js",
+    "test": "npm run build && npm run run-tests",
+    "watch": "npm run watch-js && npm run watch-tests",
+    "dev": "npm run watch && npm run livereload",
     "build-js-vendor": "browserify -r lodash -r redux -o dist/vendor.js",
-    "build-js": "browserify -x lodash -x redux src/honeypower.coffee -o dist/honeypower.js -t coffeeify --extension=\".coffee\"",
+    "//build-js": "browserify -x lodash -x redux src/honeypower.coffee -o dist/honeypower.js -t coffeeify --extension=\".coffee\" -s module.exports",
+    "build:js": "coffee -r lodash -r redux -o dist --map -c src",
     "watch-js": "watchify -x lodash -x redux src/honeypower.coffee -o dist/honeypower.js -t coffeeify --extension=\".coffee\" -dv",
     "//": "Using `globstar` here for recursive wildcard support. (Also, using `jasmine-node` pretty much exclusively for the CoffeeScript support...)",
     "run-tests": "globstar --node -- jasmine-node --coffee \"spec/**/*[Ss]pec.coffee\"; exit 0",
     "watch-tests": "",
     "build-demo": "browserify -x lodash -x redux demo/src/demo.coffee -o demo/dist/demo.js -t coffeeify --extension=\".coffee\"",
     "watch-demo": "watchify -x lodash -x redux demo/src/demo.coffee -o demo/dist/demo.js -t coffeeify --extension=\".coffee\" -dv",
-    "livereload-demo": "livereload demo dist",
-    "demo": "npm run watch-demo & npm run livereload-demo",
-    "build": "npm run build-js; npm run test",
-    "test": "npm run build-js; npm run run-tests",
-    "watch": "npm run watch-js; npm run watch-tests",
-    "dev": "npm run watch; npm run livereload"
+    "livereload-demo": "livereload demo dist"
   },
   "author": "David Isaac Lee <david@david-lee.net> (http://david-lee.net/)",
   "license": "ISC",
@@ -30,6 +31,8 @@
     "watchify": "^3.4.0"
   },
   "dependencies": {
+    "immutable": "^3.7.5",
+    "lens": "git://github.com/davidisaaclee/lens",
     "lodash": "^3.10.1",
     "redux": "^3.0.2",
     "updeep": "^0.10.1"

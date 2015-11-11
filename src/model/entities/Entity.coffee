@@ -1,4 +1,11 @@
+# TODO: change all attached timelines to IDs
+#       make it so entities can be attached to any timeline only once
+
 _ = require 'lodash'
+Immutable = require 'immutable'
+Lens = require 'lens'
+
+Set = require '../../util/Set'
 
 Model = require '../Model'
 Transform = require '../graphics/Transform'
@@ -10,68 +17,162 @@ Entity ::=
   id: String
   name: String | null
   transform: Transform
-  children: [Entity]
+  child: Entity
 ###
 class Entity extends Model
-  @make: do ->
+
+EntityFunctions =
+  make: do ->
     _spawnCount = 0
     _nextId = () -> "entity-#{_spawnCount++}"
 
-    return (name = null, transform = Transform.default, children = []) ->
-      _.assign (new Entity()),
-        id: _nextId()
+    return (name, transform, child, id) ->
+      config =
         name: name
-        transform: transform
-        children: children
+        child: child
+        id: id
+
+      initialData = _.defaults {},
+        {transform: transform},
+        {transform: Transform.default}
+
+      fields = _.defaults config,
+        id: _nextId()
+        child: null
+        name: null
+        timelines: Immutable.List()
+        timelinesData: Immutable.Map()
+        localData: initialData
+        computedData: initialData
+
+      return _.assign new Entity(), fields
+
+
+  ### Lenses ###
+
+  id: Lens.fromPath 'id'
+
+  name: Lens.fromPath 'name'
+
+  child: Lens.fromPath 'child'
+
+  localData: Lens.fromPath 'localData'
+
+  computedData: Lens.fromPath 'computedData'
+
+  timelineStack: new Lens \
+    (entity) -> entity.timelines.toArray(),
+    null
+
+  timelineData: new Lens \
+    (entity, timelineId) -> entity.timelinesData.get timelineId,
+    (entity, timelineId, val) -> _.assign {}, entity,
+      timelinesData: entity.timelinesData.set timelineId, val
+
+  progressForTimeline: new Lens \
+    (entity, timelineId) -> (entity.timelinesData.get timelineId).progress,
+    (entity, timelineId, progress) ->
+      EntityFunctions.timelineData.over entity, timelineId, (timelineData) ->
+        _.assign {}, timelineData, { progress: progress }
+
+  # transform:
+  #   Lens.compose (Lens.fromPath 'computedData'), (Lens.fromPath 'transform')
+
+  # position: Lens.compose EntityFunctions.transform, Transform.position
 
 
   # Access
 
-  @getId: (entity) -> entity.id
+  isAttachedToTimeline: (entity, timelineId) ->
+    entity.timelinesData.has timelineId
 
-  @getName: (entity) -> entity.name
+  # getTransform: (entity) ->
+  #   (EntityFunctions.computedData.get entity).transform
 
-  @getChildren: (entity) -> entity.children
+  # getPosition: (entity) ->
+  #   Transform.getPosition EntityFunctions.transform.get entity
 
-  @getPosition: (entity) -> Transform.getPosition entity.transform
+  # getRotation: (entity) ->
+  #   Transform.getRotation EntityFunctions.transform.get entity
 
-  @getRotation: (entity) -> Transform.getRotation entity.transform
-
-  @getScale: (entity) -> Transform.getScale entity.transform
+  # getScale: (entity) ->
+  #   Transform.getScale EntityFunctions.transform.get entity
 
 
   # Mutation
 
-  @addChild: (entity, child) ->
-    _.assign {}, entity,
-      children: [entity.children..., child]
+  removeChild: (entity) -> EntityFunctions.child.set entity, null
+    # _.assign {}, entity,
+    #   child: null
 
-  @removeChild: (entity, childId) ->
-    idx = _.findIndex (Entity.getChildren entity), (child) -> child.id is childId
-    if idx isnt -1
-    then _.assign {}, entity,
-        children: [ (entity.children.splice 0, idx)...,
-                    (entity.children.splice (idx + 1))... ]
+  insertTimeline: (entity, timelineId, progress = 0, stackPosition = 0) ->
+    _.assign {}, entity,
+      timelines: entity.timelines.splice stackPosition, 0, timelineId
+      timelinesData: entity.timelinesData.set timelineId,
+        progress: progress
+
+  removeTimeline: (entity, timelineIdx) ->
+    timelineId = entity.timelines.get timelineIdx
+    if timelineId?
+      _.assign {}, entity,
+        timelines: entity.timelines.delete timelineIdx
+        timelinesData: entity.timelinesData.delete timelineId
     else entity
 
-  @transform: (entity, {translate, rotate, scale}) ->
-    if translate?
-      Entity.translate entity, translate
-    if rotate?
-      Entity.rotate entity, rotate
-    if scale?
-      Entity.scale entity, scale
+  # Simply updates the `progress` field within `timelinesData` - does not update
+  #   `computedData` or respect loop/start/end.
+  # progressTimeline: (entity, timelineId, delta) ->
+  #   _.assign {}, entity,
+  #     timelinesData: entity.timelinesData.update timelineId, (timelineData) ->
+  #       _.assign {}, timelineData,
+  #         progress: timelineData.progress + delta
 
-  @translate: (entity, amount) ->
+  # setTransform: (entity, transform) ->
+  #   newLocaldata = _.assign (EntityFunctions.getLocalData entity),
+  #     transform: transform
+  #   EntityFunctions.setLocalData entity, newLocaldata
+
+  # transform: (entity, {translate, rotate, scale}) ->
+  #   if translate?
+  #     EntityFunctions.translate entity, translate
+  #   if rotate?
+  #     EntityFunctions.rotate entity, rotate
+  #   if scale?
+  #     EntityFunctions.scale entity, scale
+
+
+  # TODO: these transform functions are not tested
+
+  translateBy: (entity, amount) ->
+    EntityFunctions.transform.over entity, (transform) ->
+      Transform.translateBy transform, amount
+    # _.assign {}, entity,
+    #   transform: Transform.translateBy (EntityFunctions.transform.get entity), amount
+
+  rotateBy: (entity, amount) ->
+    EntityFunctions.transform.over entity, (transform) ->
+      Transform.rotateBy transform, amount
+    # _.assign {}, entity,
+    #   transform: Transform.rotateBy (EntityFunctions.transform.get entity), amount
+
+  scaleBy: (entity, amount) ->
+    EntityFunctions.transform.over entity, (transform) ->
+      Transform.scaleBy transform, amount
     _.assign {}, entity,
-      transform: Transform.translate entity.transform, amount
+      transform: Transform.scaleBy (EntityFunctions.transform.get entity), amount
 
-  @rotate: (entity, amount) ->
-    _.assign {}, entity,
-      transform: Transform.rotate entity.transform, amount
 
-  @scale: (entity, amount) ->
-    _.assign {}, entity,
-      transform: Transform.scale entity.transform, amount
 
-module.exports = Entity
+# Self-referential properties
+
+_.assign EntityFunctions,
+  transform:
+    Lens.compose EntityFunctions.computedData, Lens.fromPath 'transform'
+
+_.assign EntityFunctions,
+  position: Lens.compose EntityFunctions.transform, Transform.position
+  rotation: Lens.compose EntityFunctions.transform, Transform.rotation
+  scale: Lens.compose EntityFunctions.transform, Transform.scale
+
+
+module.exports = EntityFunctions

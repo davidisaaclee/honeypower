@@ -1,9 +1,11 @@
 _ = require 'lodash'
 updeep = require 'updeep'
+{combineReducers} = require 'redux'
 k = require '../ActionTypes'
 
 Scene = require '../model/Scene'
 Entity = require '../model/entities/Entity'
+Timeline = require '../model/timelines/Timeline'
 
 Set = require '../util/Set'
 
@@ -13,18 +15,25 @@ addChildReducers = require '../util/addChildReducers'
 clamp = require '../util/clamp'
 wrap = require '../util/wrap'
 
-entitiesReducer = require './EntityReducer'
+# entitiesReducer = require './EntityReducer'
 
-reducer = (state = Scene.empty, action) ->
-  state
-  # switch action.type
-  #   when k.AddEntity
-  #     {name, transform, children} = action.data
+defaultScene = Scene.empty
 
-  #     Scene.addEntity state, (Entity.make name, transform, children)
+reducer = (scene = defaultScene, action) ->
+  switch action.type
+    when k.DeltaTime
+      {delta} = action.data
 
-  #   else state
+      progress = (s, id) ->
+        Scene.progressTimeline s, id, delta
+
+      Scene.allTimelines.get scene
+        .filter (tl) ->
+          (Timeline.updateMethod.get tl) is Timeline.UpdateMethod.Time
+        .map (tl) -> Timeline.id.get tl
+        .reduce progress, scene
+
+    else scene
 
 
-module.exports = addChildReducers reducer,
-  'entities': entitiesReducer
+module.exports = reducer

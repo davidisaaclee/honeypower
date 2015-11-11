@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "Machine.js",
+  "sourceRoot": "../../..",
+  "sources": [
+    "src/model/entities/Machine.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;AAAA,MAAA,kBAAA;IAAA;+BAAA;;AAAA,EAAA,CAAA,GAAI,OAAA,CAAQ,QAAR,CAAJ,CAAA;;AAAA,EACA,MAAA,GAAS,OAAA,CAAQ,UAAR,CADT,CAAA;;AAGA;AAAA;;;;;;;;;;KAHA;;AAAA,EAeM;AACJ,+BAAA,CAAA;;;;KAAA;;AAAA,IAAA,OAAC,CAAA,IAAD,GAAO,IAAP,CAAA;;mBAAA;;KADoB,OAftB,CAAA;AAAA"
+}

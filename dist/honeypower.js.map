@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "honeypower.js",
+  "sourceRoot": "..",
+  "sources": [
+    "src/honeypower.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;AAAA;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;GAAA;AAAA;AAAA;AAAA,EA0FA,MAAM,CAAC,OAAP,GAAiB,OAAA,CAAQ,yBAAR,CA1FjB,CAAA;AAAA"
+}

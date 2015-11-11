@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "TimelinesTable.js",
+  "sourceRoot": "../../..",
+  "sources": [
+    "src/model/timelines/TimelinesTable.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;AAAA,MAAA,kCAAA;;AAAA,EAAA,UAAA,GAAa,OAAA,CAAQ,mBAAR,CAAb,CAAA;;AAAA,EACA,QAAA,GAAW,OAAA,CAAQ,YAAR,CADX,CAAA;;AAAA,EAEA,YAAA,GAAe,OAAA,CAAQ,gBAAR,CAFf,CAAA;;AAAA,EAKA,MAAM,CAAC,OAAP,GAAiB,UAAA,CAAW,QAAQ,CAAC,IAAI,CAAC,GAAzB,EAA8B,QAA9B,EACf;AAAA,IAAA,cAAA,EAAgB,YAAhB;GADe,CALjB,CAAA;AAAA"
+}

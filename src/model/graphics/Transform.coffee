@@ -1,9 +1,11 @@
 _ = require 'lodash'
+Lens = require 'Lens'
 
 Model = require '../Model'
 Vector2 = require './Vector2'
 
 wrap = require '../../util/wrap'
+ooChain = require '../../util/ooChain'
 
 ###
 Describes a two-dimensional transform.
@@ -14,7 +16,7 @@ Transform ::=
   scale: Vector2
 ###
 class Transform extends Model
-  @make: (position = Vector2.zero, rotation = 0, scale = Vector2.zero) ->
+  @make: (position = Vector2.zero, rotation = 0, scale = (Vector2.make 1, 1)) ->
     _.assign (new Transform()),
       position: position
       rotation: rotation
@@ -25,30 +27,41 @@ class Transform extends Model
   @withPosition: (position) ->
     Transform.make position
 
+  @withRotation: (rotation) ->
+    Transform.make null, rotation, null
 
-  # Access
+  @withScale: (scale) ->
+    Transform.make null, null, scale
 
-  @getPosition: (transform) -> transform.position
+  # Lenses
 
-  @getRotation: (transform) -> transform.rotation
+  @position: Lens.fromPath 'position'
 
-  @getScale: (transform) -> transform.scale
+  @rotation: Lens.fromPath 'rotation'
+
+  @scale: Lens.fromPath 'scale'
 
 
   # Mutation
 
-  @translate: (transform, amount) ->
-    _.assign {}, transform,
-      position: Vector2.add transform.position, amount
+  @applyTransform: (transformA, transformB) ->
+    ooChain transformA
+      .then Transform.translateBy, Transform.position.get transformB
+      .then Transform.rotateBy, Transform.rotation.get transformB
+      .then Transform.scaleBy, Transform.scale.get transformB
+      .value()
 
-  @rotate: (transform, amount) ->
-    _.assign {}, transform,
-      rotate: wrap 0, 2 * Math.PI, transform.rotate + amount
+  @translateBy: (transform, amount) ->
+    Transform.position.over transform, (position) ->
+      Vector2.add position, amount
 
-  @scale: (transform, amount) ->
-    _.assign {}, transform,
-      # TODO: this should probably be piecewise multiply?
-      scale: Vector2.add transform.scale, amount
+  @rotateBy: (transform, amount) ->
+    Transform.rotation.over transform, (rotation) ->
+      wrap 0, 2 * Math.PI, rotation + amount
+
+  @scaleBy: (transform, amount) ->
+    Transform.scale.over transform, (scale) ->
+      Vector2.piecewiseMultiply scale, amount
 
 
 module.exports = Transform

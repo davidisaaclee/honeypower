@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "Kit.js",
+  "sourceRoot": "../../..",
+  "sources": [
+    "src/controllers/kits/Kit.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;AAAA;AAAA"
+}
