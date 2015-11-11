@@ -69,7 +69,7 @@
       var getter;
       getter = function(model, key) {
         var results;
-        results = Set.asArray(model.kits).map(function(kit) {
+        results = Set.asArray.get(model.kits).map(function(kit) {
           return Kit.proto.get(kit, key);
         }).filter(function(x) {
           return x != null;

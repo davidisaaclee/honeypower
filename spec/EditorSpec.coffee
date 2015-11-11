@@ -30,7 +30,7 @@ describe 'Editor:', () ->
   it '(load initial state)', () ->
     store = createStore editorReducer
     editor = store.getState()
-    expect (Scene.getAllEntities editor.scene)
+    expect (Scene.allEntities.get editor.scene)
       .toEqual []
 
 
@@ -48,9 +48,9 @@ describe 'Editor:', () ->
   #     set to null or undefined for placing directly into scene
   it 'StampPrototype (onto scene)', () ->
     birdoProto = Editor.proto.get @store.getState(), 'birdo'
-    expect Entity.position.get (Prototype.getDefinition birdoProto)
+    expect Entity.position.get (Prototype.definition.get birdoProto)
       .toEqual (Vector2.make 0, 0)
-    expect (Scene.getAllEntities @store.getState().scene)
+    expect (Scene.allEntities.get @store.getState().scene)
       .toEqual []
 
     @store.dispatch
@@ -61,14 +61,14 @@ describe 'Editor:', () ->
         name: 'birdoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 1
-    expect Entity.name.get (Scene.getAllEntities @store.getState().scene)[0]
+    expect Entity.name.get (Scene.allEntities.get @store.getState().scene)[0]
       .toEqual 'birdoStamp'
-    expect Entity.position.get (Scene.getAllEntities @store.getState().scene)[0]
+    expect Entity.position.get (Scene.allEntities.get @store.getState().scene)[0]
       .toEqual (Vector2.make 10, 10)
     birdoProto = Editor.proto.get @store.getState(), 'birdo'
-    expect Entity.position.get (Prototype.getDefinition birdoProto)
+    expect Entity.position.get (Prototype.definition.get birdoProto)
       .toEqual (Vector2.make 0, 0)
 
     @store.dispatch
@@ -77,9 +77,9 @@ describe 'Editor:', () ->
         id: 'myBirdo'
         proto: 'birdo'
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 2
-    expect (Scene.getEntity @store.getState().scene, 'myBirdo')
+    expect (Scene.entity.get @store.getState().scene, 'myBirdo')
       .toBeDefined()
 
 
@@ -95,16 +95,16 @@ describe 'Editor:', () ->
         name: 'birdoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 1
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
 
     @store.dispatch
       type: k.RemoveEntity
       data:
         entity: birdoInstance.id
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 0
 
     @store.dispatch
@@ -122,19 +122,19 @@ describe 'Editor:', () ->
         name: 'kiddoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 2
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
 
     @store.dispatch
       type: k.RemoveEntity
       data:
         entity: birdoInstance.id
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
-    kiddoInstance = Scene.getEntityByName @store.getState().scene, 'kiddoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
+    kiddoInstance = Scene.entityByName.get @store.getState().scene, 'kiddoStamp'
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 1
     expect birdoInstance
       .toBeUndefined()
@@ -146,7 +146,7 @@ describe 'Editor:', () ->
       data:
         entity: kiddoInstance.id
 
-    expect (Scene.getAllEntities @store.getState().scene).length
+    expect (Scene.allEntities.get @store.getState().scene).length
       .toBe 0
 
 
@@ -164,7 +164,7 @@ describe 'Editor:', () ->
         onto: null
         transform: Transform.withPosition initialPosition
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
     expect Entity.position.get birdoInstance
       .toEqual initialPosition
     expect Entity.rotation.get birdoInstance
@@ -180,7 +180,7 @@ describe 'Editor:', () ->
         entity: birdoInstance.id
         transform: Transform.withPosition translationAmount
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
     expect Entity.position.get birdoInstance
       .toEqual (Vector2.add initialPosition, translationAmount)
     expect Entity.rotation.get birdoInstance
@@ -198,7 +198,7 @@ describe 'Editor:', () ->
         entity: birdoInstance.id
         transform: xform
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
     expect Entity.position.get birdoInstance
       .toEqual (Vector2.add initialPosition, (Vector2.scale translationAmount, 2))
     expect Entity.rotation.get birdoInstance
@@ -212,7 +212,7 @@ describe 'Editor:', () ->
         entity: birdoInstance.id
         transform: Transform.withScale (Vector2.make 3, 2)
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
     expect Entity.position.get birdoInstance
       .toEqual (Vector2.add initialPosition, (Vector2.scale translationAmount, 2))
     expect Entity.rotation.get birdoInstance
@@ -237,7 +237,7 @@ describe 'Editor:', () ->
         name: 'birdoStamp'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
-    birdoInstance = Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get @store.getState().scene, 'birdoStamp'
 
     @store.dispatch
       type: k.StampPrototype
@@ -248,12 +248,12 @@ describe 'Editor:', () ->
         transform: Transform.withPosition (Vector2.make 0, 0)
 
     birdoInstance =
-      Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+      Scene.entityByName.get @store.getState().scene, 'birdoStamp'
     expect birdoInstance
       .toBeDefined()
 
     kiddoInstance =
-      Scene.getEntityByName @store.getState().scene, 'kiddoStamp'
+      Scene.entityByName.get @store.getState().scene, 'kiddoStamp'
     expect kiddoInstance
       .toBeDefined()
 
@@ -288,9 +288,9 @@ describe 'Editor:', () ->
         transform: Transform.withPosition (Vector2.make 10, 10)
 
     birdoInstance_ =
-      Scene.getEntityByName @store.getState().scene, 'birdoStamp'
+      Scene.entityByName.get @store.getState().scene, 'birdoStamp'
     kiddoInstance_ =
-      Scene.getEntityByName @store.getState().scene, 'kiddoStamp'
+      Scene.entityByName.get @store.getState().scene, 'kiddoStamp'
 
     @store.dispatch
       type: k.LinkEntities
@@ -299,11 +299,11 @@ describe 'Editor:', () ->
         child: kiddoInstance_.id
 
     scene = @store.getState().scene
-    birdoInstance = Scene.getEntityByName scene, 'birdoStamp'
+    birdoInstance = Scene.entityByName.get scene, 'birdoStamp'
     expect birdoInstance
       .toBeDefined()
 
-    kiddoInstance = Scene.getEntityByName scene, 'kiddoStamp'
+    kiddoInstance = Scene.entityByName.get scene, 'kiddoStamp'
     expect kiddoInstance
       .toBeDefined()
 
@@ -331,11 +331,11 @@ describe 'Editor:', () ->
           ]
 
     scene = @store.getState().scene
-    expect (Scene.getAllTimelines scene).length
+    expect (Scene.allTimelines.get scene).length
       .toBe 1
 
-    timeline = _.head Scene.getAllTimelines scene
-    expect Scene.getTimelineById scene, timeline.id
+    timeline = _.head Scene.allTimelines.get scene
+    expect Scene.timeline.get scene, timeline.id
       .toBe timeline
     expect timeline['type']
       .toBe 'PathTimeline'
@@ -352,11 +352,11 @@ describe 'Editor:', () ->
           ]
 
     scene = @store.getState().scene
-    expect (Scene.getAllTimelines scene).length
+    expect (Scene.allTimelines.get scene).length
       .toBe 2
-    expect Scene.getTimelineById scene, 'myTimeline'
+    expect Scene.timeline.get scene, 'myTimeline'
       .toBeDefined()
-    expect Timeline.type.get (Scene.getTimelineById scene, 'myTimeline')
+    expect Timeline.type.get (Scene.timeline.get scene, 'myTimeline')
       .toEqual 'MockTimeline'
 
 
@@ -400,9 +400,9 @@ describe 'Editor:', () ->
         name: 'kiddoStamp'
 
     scene = @store.getState().scene
-    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'b'
       .toEqual []
-    expect Entity.timelineStack.get Scene.getEntity scene, 'k'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'k'
       .toEqual []
 
     @store.dispatch
@@ -412,9 +412,9 @@ describe 'Editor:', () ->
         entity: 'b'
 
     scene = @store.getState().scene
-    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'b'
       .toEqual ['timeline1']
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'b'), 'timeline1'
       .toBe 0
 
     @store.dispatch
@@ -425,11 +425,11 @@ describe 'Editor:', () ->
         progress: 0.2
 
     scene = @store.getState().scene
-    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'b'
       .toEqual ['timeline2', 'timeline1']
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'b'), 'timeline1'
       .toBe 0
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline2'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'b'), 'timeline2'
       .toBe 0.2
 
     @store.dispatch
@@ -446,11 +446,11 @@ describe 'Editor:', () ->
         progress: 0.5
 
     scene = @store.getState().scene
-    expect Entity.timelineStack.get Scene.getEntity scene, 'k'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'k'
       .toEqual ['timeline1', 'timeline2']
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'k'), 'timeline2'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'k'), 'timeline2'
       .toBe 0.5
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'k'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'k'), 'timeline1'
       .toBe 0
 
 
@@ -509,9 +509,9 @@ describe 'Editor:', () ->
         entity: 'b'
 
     scene = @store.getState().scene
-    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'b'
       .toEqual ['timeline1']
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'b'), 'timeline1'
       .toBe 0
 
     @store.dispatch
@@ -527,9 +527,9 @@ describe 'Editor:', () ->
         entity: 'b'
 
     scene = @store.getState().scene
-    expect Entity.timelineStack.get Scene.getEntity scene, 'b'
+    expect Entity.timelineStack.get Scene.entity.get scene, 'b'
       .toEqual ['timeline1']
-    expect Entity.progressForTimeline.get (Scene.getEntity scene, 'b'), 'timeline1'
+    expect Entity.progressForTimeline.get (Scene.entity.get scene, 'b'), 'timeline1'
       .toBe 0
 
 
@@ -563,7 +563,7 @@ describe 'Editor:', () ->
         name: 'eddy jr'
         transform: Transform.withPosition (Vector2.make 10, 10)
 
-    eddyInstance = Scene.getEntityByName scene, 'eddy jr'
+    eddyInstance = Scene.entityByName.get scene, 'eddy jr'
 
     @store.dispatch
       type: k.RequestEntityEditor
@@ -583,9 +583,9 @@ describe 'Editor:', () ->
 
   #   scene = @store.getState().scene
 
-  #   expect (Scene.getAllEntities scene).length
+  #   expect (Scene.allEntities.get scene).length
   #     .toBe 1
-  #   expect (Scene.getEntityByName scene, 'kiddo')
+  #   expect (Scene.entityByName.get scene, 'kiddo')
   #     .toBeDefined()
 
   #   @store.dispatch
@@ -595,9 +595,9 @@ describe 'Editor:', () ->
 
   #   scene = @store.getState().scene
 
-  #   expect (Scene.getAllEntities scene).length
+  #   expect (Scene.allEntities.get scene).length
   #     .toBe 2
-  #   expect (Scene.getEntityByName scene, 'kiddo')
+  #   expect (Scene.entityByName.get scene, 'kiddo')
   #     .toBeDefined()
-  #   expect (Scene.getEntityByName scene, 'birdo')
+  #   expect (Scene.entityByName.get scene, 'birdo')
   #     .toBeDefined()

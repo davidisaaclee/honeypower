@@ -63,7 +63,8 @@
     type: Lens.fromPath('type'),
     updateMethod: Lens.fromPath('updateMethod'),
     id: Lens.fromPath('id'),
-    length: Lens.fromPath('length')
+    length: Lens.fromPath('length'),
+    data: Lens.fromPath('data')
   };
 
   module.exports = TimelineFunctions;

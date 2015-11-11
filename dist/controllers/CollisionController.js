@@ -9,7 +9,7 @@
     if (scene.constructor.name !== 'Scene') {
       throw new Error('checkCollisions() supplied a non-Scene input.');
     }
-    entityArray = Set.asArray(scene.entities);
+    entityArray = Set.asArray.get(scene.entities);
     return entityArray.map(function(entityA, idx) {
       if (idx !== (entityArray.length - 1)) {
         return (entityArray.splice(idx + 1)).map(function(entityB) {

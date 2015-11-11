@@ -1,4 +1,6 @@
 _ = require 'lodash'
+Lens = require 'Lens'
+
 Model = require '../Model'
 Vector2 = require './Vector2'
 
@@ -9,7 +11,7 @@ pairs = require '../../util/pairs'
 calculateLength = (points) ->
   pairs points
     .map ([src, dst]) -> Vector2.subtract dst, src
-    .map (displacement) -> Vector2.magnitude displacement
+    .map (displacement) -> Vector2.magnitude.get displacement
     .reduce _.add, 0
 
 ###
@@ -46,18 +48,15 @@ class Path extends Model
   @empty: Object.freeze Path.make()
 
 
-  # Access
+  # Lenses
 
-  # Gets the start point of `path`.
-  #
-  #     Path.pointAt p, 0 == Path.start p
-  @start: (path) -> _.head path.points
+  @point: Lens.fromPath (idx) -> [ 'points', idx ]
 
+  @start: Lens.fromPath 'points.0'
 
-  # Gets the end point of `path`.
-  #
-  #     Path.pointAt p, 1 == Path.start p
-  @end: (path) -> _.last path.points
+  @end: new Lens \
+    (path) -> _.last path.points,
+    (path, v) -> [(_.initial path.points)..., v]
 
 
   ###
@@ -71,7 +70,7 @@ class Path extends Model
     segments = pairs path.points
 
     targetSegment = _.find segments, ([src, dst]) ->
-      dist = Vector2.magnitude Vector2.subtract dst, src
+      dist = Vector2.magnitude.get Vector2.subtract dst, src
       nextDistanceLeft = distanceLeft - dist
       if nextDistanceLeft < 0
         return true
@@ -83,12 +82,12 @@ class Path extends Model
       [src, dst] = targetSegment
       ooChain dst
         .then Vector2.subtract, src
-        .then Vector2.setMagnitude, distanceLeft
+        .then Vector2.magnitude.set, distanceLeft
         .then Vector2.add, src
         .value()
     else
       # outside positive bounds; return end point
-      return Path.end path
+      return Path.end.get path
 
 
 

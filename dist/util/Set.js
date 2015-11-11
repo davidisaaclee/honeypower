@@ -45,6 +45,12 @@
       return ['_elements', hash];
     });
 
+    Set.asArray = new Lens(function(set) {
+      return _.values(set._elements);
+    }, function(set, array) {
+      return array.reduce(Set.put, Set.clear(set));
+    });
+
     Set.get = function(set, hash) {
       return Set.element.get(set, hash);
     };
@@ -58,15 +64,11 @@
     };
 
     Set.find = function(set, predicate) {
-      return _.find(Set.asArray(set), predicate);
+      return _.find(Set.asArray.get(set), predicate);
     };
 
-    Set.asArray = function(set) {
-      return _.values(set._elements);
-    };
-
-    Set.asObject = function(set) {
-      return set._elements;
+    Set.keys = function(set) {
+      return Object.keys(set._elements);
     };
 
     Set.put = function(set, element) {
@@ -81,6 +83,10 @@
       return _.assign({}, set, {
         _elements: _.omit(set._elements, hash)
       });
+    };
+
+    Set.clear = function(set) {
+      return (Set.asArray.get(set)).reduce(Set.remove, set);
     };
 
     return Set;

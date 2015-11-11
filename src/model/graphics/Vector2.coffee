@@ -1,4 +1,5 @@
 _ = require 'lodash'
+Lens = require 'lens'
 
 Model = require '../Model'
 
@@ -17,8 +18,19 @@ class Vector2 extends Model
 
   @zero: Object.freeze (Vector2.make 0, 0)
 
-  @magnitude: (v) ->
-    Math.sqrt Vector2.squaredMagnitude v
+
+  ### Lenses ###
+
+  @x: Lens.fromPath 'x'
+
+  @y: Lens.fromPath 'y'
+
+  @magnitude: new Lens \
+    (v) -> Math.sqrt Vector2.squaredMagnitude v,
+    (v, m) -> Vector2.scale (Vector2.normalize v), m
+
+
+  ### Operations ###
 
   @squaredMagnitude: (v) ->
     v.x * v.x + v.y * v.y
@@ -45,9 +57,7 @@ class Vector2 extends Model
       v1.y * v2.y
 
   @normalize: (v) ->
-    Vector2.scale v, (1 / Vector2.magnitude v)
+    Vector2.scale v, (1 / Vector2.magnitude.get v)
 
-  @setMagnitude: (v, magnitude) ->
-    Vector2.scale (Vector2.normalize v), magnitude
 
 module.exports = Vector2

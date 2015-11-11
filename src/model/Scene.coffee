@@ -1,6 +1,5 @@
 _ = require 'lodash'
-u = require 'updeep'
-{createStore} = require 'redux'
+Lens = require 'lens'
 Model = require './Model'
 Entity = require './entities/Entity'
 Timeline = require './timelines/Timeline'
@@ -33,29 +32,40 @@ class Scene extends Model
       (Set.withHashFunction Timeline.id.get)
 
 
+  ### Lenses ###
+
+  @entitySet: Lens.fromPath 'entities'
+
+  @allEntities: Lens.compose Scene.entitySet, Set.asArray
+
+  @entity: do ->
+    composed = Lens.compose Scene.entitySet, Set.element
+    new Lens \
+      (scene, id) -> composed.get scene, [], [id],
+      (scene, id, v) -> composed.set scene, [], [id], v
+
+  @entityByName: new Lens \
+    (scene, name) -> Set.find (Scene.entitySet.get scene), name: name,
+    (scene, name, v) ->
+      id =
+        Entity.id.get (Set.find (Scene.entitySet.get scene), {name: name})
+      Scene.entity.over scene, id, (e) -> v
+
+  @timelineSet: Lens.fromPath 'timelines'
+
+  @allTimelines: Lens.compose Scene.timelineSet, Set.asArray
+
+  @timeline: do ->
+    composed = Lens.compose Scene.timelineSet, Set.element
+    new Lens \
+      (scene, id) -> composed.get scene, [], [id],
+      (scene, id, v) -> composed.set scene, [], [id], v
+
+
+
   # Access
 
-  @getEntity: (scene, entityId) ->
-    Set.get scene.entities, entityId
-
-  @getEntityById: @getEntity
-
-  @getEntityByName: (scene, entityName) ->
-    Set.find scene.entities, name: entityName
-
-  @getAllEntityIds: (scene) ->
-    Object.keys Set.asObject scene.entities
-
-  @getAllEntities: (scene) ->
-    Set.asArray scene.entities
-
-  @getTimelineById: (scene, timelineId) ->
-    Set.get scene.timelines, timelineId
-
-  @getTimeline: @getTimelineById
-
-  @getAllTimelines: (scene) ->
-    Set.asArray scene.timelines
+  @getAllEntityIds: (scene) -> Set.keys scene.entities
 
 
   # Mutation
@@ -69,12 +79,12 @@ class Scene extends Model
       entities: Set.remove scene.entities, (Set.get scene.entities, entityId)
 
   @linkEntitiesById: (scene, parentId, childId) ->
-    parent = Scene.getEntity scene, parentId
-    child = Scene.getEntity scene, childId
+    parent = Scene.entity.get scene, parentId
+    child = Scene.entity.get scene, childId
 
     if parent? and child?
       newScene = scene
-      newScene = Scene.mutateEntity newScene, parent.id, (e) ->
+      newScene = Scene.entity.over newScene, parent.id, (e) ->
         Entity.child.set e, child
       return newScene
     else
@@ -97,22 +107,6 @@ class Scene extends Model
           (Neither exists.)"""
 
 
-  ###
-  Mutates an entity in a provided callback.
-
-    scene [Scene] - the invoking `Scene`
-    entityId [String] - the id of the entity to be modified
-    proc [Function<Entity, Entity>] - procedure which takes in the specified
-      `Entity` and returns a modified copy of the `Entity`. this procedure is
-      not called if no `Entity` with ID `entityId` exists in this `Scene`.
-  ###
-  @mutateEntity: (scene, entityId, proc) ->
-    entity = Scene.getEntity scene, entityId
-    if entity?
-    then _.assign {}, scene, entities: (Set.put scene.entities, proc entity)
-    else scene
-
-
   @addTimeline: (scene, timeline) ->
     _.assign {}, scene,
       timelines: Set.put scene.timelines, timeline
@@ -125,53 +119,38 @@ class Scene extends Model
 
 
   @attachEntityToTimeline: (scene, entityId, timelineId, progress = 0, stackPosition = 0) ->
-    entity = Scene.getEntity scene, entityId
-    timeline = Scene.getTimeline scene, timelineId
+    entity = Scene.entity.get scene, entityId
+    timeline = Scene.timeline.get scene, timelineId
 
     if entity? and timeline?
-      Scene.mutateEntity scene, entityId, (e) ->
+      Scene.entity.over scene, entityId, (e) ->
         Entity.insertTimeline e, timelineId, progress, stackPosition
     else scene
 
 
   @detachEntityFromTimelineAtIndex: (scene, entityId, timelineIdx) ->
-    Scene.mutateEntity scene, entityId, (e) ->
+    Scene.entity.over scene, entityId, (e) ->
       Entity.removeTimeline e, timelineIdx
 
 
   @updateEntityData: (scene, entityId) ->
-    Scene.mutateEntity scene, entityId, (entity) ->
+    Scene.entity.over scene, entityId, (entity) ->
       Scene.Entities.computeEntityData scene, entity
 
 
-  @mutateTimeline: (scene, timelineId, proc) ->
-    timeline = Scene.getTimelineById scene, timelineId
-    if timeline?
-    then _.assign {}, scene, timelines: (Set.put scene.timelines, proc timeline)
-    else scene
-
-
   @progressTimeline: (scene, timelineId, delta) ->
-    timelineObj = Scene.getTimeline scene, timelineId
+    timelineObj = Scene.timeline.get scene, timelineId
     scaledDelta = delta / Timeline.length.get timelineObj
 
     # flipped version for easy reduction
-    progressEntity = (s, eId) -> Scene.mutateEntity s, eId, (e) ->
-      currentProgress =
-        Entity.progressForTimeline.get e, timelineId
-      # d = switch
-      #   when (currentProgress + scaledDelta) > 1
-      #     1 - currentProgress
-      #   when (currentProgress + scaledDelta) < 0
-      #     0 - currentProgress
-      #   else
-      #     scaledDelta
+    progressEntity = (s, eId) -> Scene.entity.over s, eId, (e) ->
+      currentProgress = Entity.progressForTimeline.get e, timelineId
       newProgress = clamp 0, 1, (currentProgress + scaledDelta)
 
       Entity.progressForTimeline.set e, timelineId, newProgress
 
     affectedEntityIds =
-      Scene.getAllEntities scene
+      Scene.allEntities.get scene
         .filter (entity) -> Entity.isAttachedToTimeline entity, timelineId
         .map (entity) -> Entity.id.get entity
 
@@ -198,7 +177,7 @@ class Scene extends Model
         Entity.computedData.set ent,
           Entity.timelineStack.get ent
             .map (timelineId) ->
-              timeline = Scene.getTimeline scene, timelineId
+              timeline = Scene.timeline.get scene, timelineId
               progress = Entity.progressForTimeline.get entity, timelineId
               return (d) -> TimelinesTable.mapping timeline, progress, d
             .reduce ((data, mutator) -> mutator data), (Entity.localData.get ent)
@@ -209,8 +188,8 @@ class Scene extends Model
 
     mutateLocalData: (scene, entity, mutator) ->
       ctx = (ent, mutator) ->
-        ent = Entity.localData.set ent, (mutator Entity.localData.get ent)
-        ent = Scene.Entities.computeEntityData scene, ent
+        Scene.Entities.computeEntityData scene,
+          Entity.localData.over ent, mutator
 
       if arguments.length is 1
       then ctx

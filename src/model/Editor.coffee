@@ -37,7 +37,7 @@ EditorFns =
 
   proto: do ->
     getter = (model, key) ->
-      results = Set.asArray model.kits
+      results = Set.asArray.get model.kits
         .map (kit) -> Kit.proto.get kit, key
         .filter (x) -> x?
 

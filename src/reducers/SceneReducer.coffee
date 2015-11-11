@@ -27,7 +27,7 @@ reducer = (scene = defaultScene, action) ->
       progress = (s, id) ->
         Scene.progressTimeline s, id, delta
 
-      Scene.getAllTimelines scene
+      Scene.allTimelines.get scene
         .filter (tl) ->
           (Timeline.updateMethod.get tl) is Timeline.UpdateMethod.Time
         .map (tl) -> Timeline.id.get tl

@@ -30,7 +30,7 @@
       });
     };
 
-    PathTimeline.path = Lens.fromPath('data.path');
+    PathTimeline.path = Lens.compose(Timeline.data, Lens.fromPath('path'));
 
 
     /*

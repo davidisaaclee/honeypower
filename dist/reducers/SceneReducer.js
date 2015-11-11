@@ -39,7 +39,7 @@
         progress = function(s, id) {
           return Scene.progressTimeline(s, id, delta);
         };
-        return Scene.getAllTimelines(scene).filter(function(tl) {
+        return Scene.allTimelines.get(scene).filter(function(tl) {
           return (Timeline.updateMethod.get(tl)) === Timeline.UpdateMethod.Time;
         }).map(function(tl) {
           return Timeline.id.get(tl);

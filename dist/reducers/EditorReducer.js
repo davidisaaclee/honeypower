@@ -51,7 +51,7 @@
           stamp = Editor.stampPrototype(state, proto, transform, name, id);
           newScene = Scene.addEntity(scene, stamp);
           if (onto != null) {
-            parentObj = Scene.getEntity(scene, onto);
+            parentObj = Scene.entity.get(scene, onto);
             newScene = Scene.linkEntitiesById(newScene, parentObj.id, stamp.id);
           }
           return newScene;
@@ -59,7 +59,7 @@
       case k.TransformEntity:
         ref1 = action.data, entity = ref1.entity, transform = ref1.transform;
         return Editor.scene.over(state, function(scene) {
-          return Scene.mutateEntity(scene, entity, function(e) {
+          return Scene.entity.over(scene, entity, function(e) {
             return Scene.Entities.mutateLocalData(scene, e, function(data) {
               return _.assign({}, data, {
                 transform: Transform.applyTransform(data.transform, transform)

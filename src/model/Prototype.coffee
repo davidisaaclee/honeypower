@@ -1,4 +1,6 @@
 _ = require 'lodash'
+Lens = require 'lens'
+
 Model = require './Model'
 Entity = require './entities/Entity'
 
@@ -28,9 +30,9 @@ class Prototype extends Model
       id
 
 
-  # Access
+  # Lenses
 
-  @getDefinition: (proto) -> proto.entity
+  @definition: Lens.fromPath 'entity'
 
 
 module.exports = Prototype

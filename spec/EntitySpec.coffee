@@ -15,8 +15,8 @@ describe 'Entities', () ->
 
     @getEntities = () => @store.getState().entities
 
-    @birdoId = Entity.id.get (Scene.getEntityByName @store.getState(), 'birdo')
-    @kiddoId = Entity.id.get (Scene.getEntityByName @store.getState(), 'kiddo')
+    @birdoId = Entity.id.get (Scene.entityByName.get @store.getState(), 'birdo')
+    @kiddoId = Entity.id.get (Scene.entityByName.get @store.getState(), 'kiddo')
 
 
   it 'loads default state', () ->

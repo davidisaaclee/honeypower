@@ -22,6 +22,10 @@ class Set
 
   @element: Lens.fromPath (hash) -> ['_elements', hash]
 
+  @asArray: new Lens \
+    (set) -> _.values set._elements,
+    (set, array) -> array.reduce Set.put, (Set.clear set)
+
 
   # Access
 
@@ -31,11 +35,9 @@ class Set
 
   @count: (set) -> (Object.keys set._elements).length
 
-  @find: (set, predicate) -> _.find (Set.asArray set), predicate
+  @find: (set, predicate) -> _.find (Set.asArray.get set), predicate
 
-  @asArray: (set) -> _.values set._elements
-
-  @asObject: (set) -> set._elements
+  @keys: (set) -> Object.keys set._elements
 
 
   # Mutation
@@ -44,7 +46,10 @@ class Set
 
   @remove: (set, element) -> Set.removeByHash set, set._hash element
 
-  @removeByHash: (set, hash) -> _.assign {}, set, _elements: _.omit set._elements, hash
+  @removeByHash: (set, hash) -> _.assign {}, set,
+    _elements: _.omit set._elements, hash
+
+  @clear: (set) -> (Set.asArray.get set).reduce Set.remove, set
 
 
 module.exports = Set

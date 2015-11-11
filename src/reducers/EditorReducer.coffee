@@ -36,7 +36,7 @@ reducer = (state = defaultState, action) ->
         newScene = Scene.addEntity scene, stamp
 
         if onto?
-          parentObj = Scene.getEntity scene, onto
+          parentObj = Scene.entity.get scene, onto
           newScene = Scene.linkEntitiesById newScene, parentObj.id, stamp.id
 
         return newScene
@@ -47,7 +47,7 @@ reducer = (state = defaultState, action) ->
 
 
       Editor.scene.over state, (scene) ->
-        Scene.mutateEntity scene, entity, (e) ->
+        Scene.entity.over scene, entity, (e) ->
           Scene.Entities.mutateLocalData scene, e, (data) ->
             _.assign {}, data,
               transform:

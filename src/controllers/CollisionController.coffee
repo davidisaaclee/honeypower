@@ -6,7 +6,7 @@ checkCollisions = (scene) ->
   if scene.constructor.name isnt 'Scene'
     throw new Error 'checkCollisions() supplied a non-Scene input.'
 
-  entityArray = Set.asArray scene.entities
+  entityArray = Set.asArray.get scene.entities
 
   entityArray
     .map (entityA, idx) ->

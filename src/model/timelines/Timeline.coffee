@@ -53,5 +53,7 @@ TimelineFunctions =
 
   length: Lens.fromPath 'length'
 
+  data: Lens.fromPath 'data'
+
 
 module.exports = TimelineFunctions

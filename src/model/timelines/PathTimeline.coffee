@@ -11,7 +11,7 @@ class PathTimeline extends Timeline
       class: 'PathTimeline'
       path: path
 
-  @path: Lens.fromPath 'data.path'
+  @path: Lens.compose Timeline.data, Lens.fromPath 'path'
 
 
   # Timeline

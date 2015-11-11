@@ -27,25 +27,25 @@ describe 'Scene:', () ->
       .let 'kiddo': Entity.make 'kiddo'
       .let 'timeline': Timeline.make 'PathTimeline', 1, path: @path
       .in (v, l) -> Scene.with [l.kiddo], [l.timeline]
-      .let (v) -> 'kiddoEntity': Scene.getEntityByName v, 'kiddo'
-      .let (v) -> 'timeline': (Scene.getAllTimelines v)[0]
+      .let (v) -> 'kiddoEntity': Scene.entityByName.get v, 'kiddo'
+      .let (v) -> 'timeline': (Scene.allTimelines.get v)[0]
       .in (v, l) ->
-        Scene.mutateTimeline v, l.timeline.id, (tmln) ->
+        Scene.timeline.over v, l.timeline.id, (tmln) ->
           Timeline.updateMethod.set tmln, Timeline.UpdateMethod.Time
       .in (v, l) ->
         Scene.attachEntityToTimeline v, l.kiddoEntity.id, l.timeline.id, 0
       .value()
 
-    @timelineId = Timeline.id.get (Scene.getAllTimelines prefilledScene)[0]
+    @timelineId = Timeline.id.get (Scene.allTimelines.get prefilledScene)[0]
 
     @prefilled = createStore sceneReducer, prefilledScene
 
 
   it '(loads default state)', () ->
     scene = @empty.getState()
-    expect Scene.getAllEntities scene
+    expect Scene.allEntities.get scene
       .toEqual []
-    expect Scene.getAllTimelines scene
+    expect Scene.allTimelines.get scene
       .toEqual []
 
 
@@ -58,9 +58,9 @@ describe 'Scene:', () ->
     expect Path.pointAt @path, 0.5
       .toEqual Vector2.make 0.5, 0.5
 
-    expect Scene.getEntityByName scene, 'kiddo'
+    expect Scene.entityByName.get scene, 'kiddo'
       .toBeDefined()
-    expect Entity.position.get (Scene.getEntityByName scene, 'kiddo')
+    expect Entity.position.get (Scene.entityByName.get scene, 'kiddo')
       .toEqual Vector2.make 0, 0
 
     @prefilled.dispatch
@@ -69,7 +69,7 @@ describe 'Scene:', () ->
         delta: 0.5
 
     scene = @prefilled.getState()
-    kiddo = Scene.getEntityByName scene, 'kiddo'
+    kiddo = Scene.entityByName.get scene, 'kiddo'
     expect Entity.progressForTimeline.get kiddo, @timelineId
       .toEqual 0.5
     expect Entity.position.get kiddo
@@ -81,7 +81,7 @@ describe 'Scene:', () ->
         delta: -0.2
 
     scene = @prefilled.getState()
-    expect Entity.position.get (Scene.getEntityByName scene, 'kiddo')
+    expect Entity.position.get (Scene.entityByName.get scene, 'kiddo')
       .toEqual Vector2.make 0.3, 0.3
 
     @prefilled.dispatch
@@ -90,7 +90,7 @@ describe 'Scene:', () ->
         delta: 2
 
     scene = @prefilled.getState()
-    kiddo = Scene.getEntityByName scene, 'kiddo'
+    kiddo = Scene.entityByName.get scene, 'kiddo'
     expect Entity.progressForTimeline.get kiddo, @timelineId
       .toBe 1
     expect Entity.position.get kiddo
@@ -102,7 +102,7 @@ describe 'Scene:', () ->
         delta: -0.1
 
     scene = @prefilled.getState()
-    kiddo = Scene.getEntityByName scene, 'kiddo'
+    kiddo = Scene.entityByName.get scene, 'kiddo'
     expect Entity.progressForTimeline.get kiddo, @timelineId
       .toBe 0.9
     expect Entity.position.get kiddo
